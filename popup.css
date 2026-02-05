@@ -551,6 +551,20 @@ input:checked + .slider:before {
   color: #888;
 }
 
+.about-links {
+  margin-bottom: 8px;
+}
+
+.about-links a {
+  color: #667eea;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.about-links a:hover {
+  text-decoration: underline;
+}
+
 /* Modal */
 .modal {
   display: none;

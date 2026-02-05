@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "URL Override - Dev Redirect",
+  "name": "HotSwap",
   "version": "1.0.0",
   "description": "Redirect URLs from production to localhost for development debugging (PCF, CRM, etc.)",
   "author": "Krunal Patel",
-  "homepage_url": "https://github.com/krunalpatel",
+  "homepage_url": "https://github.com/krunal039/HotSwap",
   "permissions": [
     "storage",
     "declarativeNetRequest",

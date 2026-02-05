@@ -1,4 +1,6 @@
-// Background service worker for URL redirection
+// HotSwap - Background service worker for URL redirection
+// Author: Krunal Patel
+// GitHub: https://github.com/krunal039/HotSwap
 
 const REDIRECT_RULE_ID_START = 1;
 const CSP_RULE_ID_START = 5000; // Reserve IDs 5000+ for CSP rules

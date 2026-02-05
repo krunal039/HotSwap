@@ -1,8 +1,9 @@
-# URL Override - Chrome Extension for Development
+# HotSwap - Chrome Extension for Development
 
 **Author:** Krunal Patel  
 **Version:** 1.0.0  
-**License:** MIT
+**License:** MIT  
+**GitHub:** https://github.com/krunal039/HotSwap
 
 A Chrome extension that redirects URLs from production to localhost for development debugging. Perfect for PCF controls, Dynamic CRM, Power Apps, and other scenarios where you need to test local code against production environments.
 
@@ -167,7 +168,7 @@ Contributions are welcome! Feel free to submit issues or pull requests.
 
 MIT License
 
-Copyright (c) 2024 Krunal Patel
+Copyright (c) 2026 Krunal Patel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
