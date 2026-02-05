@@ -1,4 +1,4 @@
-# HotSwap v3.0.0
+# HotSwap v1.1.1.0
 
 Advanced URL redirect, block, and header modification Chrome extension for development debugging.
 
@@ -22,12 +22,12 @@ Advanced URL redirect, block, and header modification Chrome extension for devel
 - **Search & Filter** - Find rules by name, pattern, or group
 
 ### Developer Experience
-- **Templates** - Quick-start templates for common scenarios
 - **Undo/Redo** - Revert changes with Ctrl+Z / Ctrl+Y
 - **Drag & Drop** - Reorder rules by dragging
 - **Bulk Actions** - Enable/disable/delete multiple rules at once
 - **Duplicate Detection** - Warning when adding similar patterns
 - **Domain Toggle** - Quick toggle rules for current domain
+- **Built-in Help** - Usage instructions and troubleshooting guide
 
 ### Keyboard Shortcuts
 - `Ctrl+Shift+H` (Mac: `Cmd+Shift+H`) - Toggle HotSwap on/off
@@ -68,21 +68,6 @@ Advanced URL redirect, block, and header modification Chrome extension for devel
 5. Enter **Source URL Pattern** (e.g., `*bundle*.js`)
 6. Enter **Target URL** for redirects (e.g., `http://localhost:8181/bundle.js`)
 7. Click **Add Rule** and refresh your page!
-
-## Templates
-
-Click the **Templates** tab for pre-configured rules:
-
-| Template | Description |
-|----------|-------------|
-| PCF Control Debug | Redirect PCF bundle.js to localhost |
-| React DevTools | Enable React DevTools in production |
-| Block Analytics | Block Google Analytics tracking |
-| Block Ads | Block common ad networks |
-| Local API | Redirect API calls to localhost |
-| Add CORS Headers | Add permissive CORS headers |
-| Disable Cache | Add no-cache headers |
-| Custom Header | Add custom request headers |
 
 ## Pattern Examples
 
@@ -173,10 +158,10 @@ Debugging a Power Apps PCF control:
 
 ## Changelog
 
-### v3.0.0
+### v1.1.1.0
 - **Header Modification** - Add/remove/modify request and response headers
 - **Rule Groups & Colors** - Organize and color-code rules
-- **Templates** - Quick-start templates for common scenarios
+- **Built-in Help Section** - Comprehensive usage guide and troubleshooting
 - **Undo/Redo** - Full undo/redo support with Ctrl+Z/Y
 - **Drag & Drop Reorder** - Reorder rules by dragging
 - **Bulk Actions** - Select and manage multiple rules at once

@@ -1,4 +1,4 @@
-// HotSwap v3.0.0 - Popup script
+// HotSwap v1.1.1.0 - Popup script
 // Author: Krunal Patel
 
 document.addEventListener('DOMContentLoaded', init);
@@ -15,86 +15,6 @@ let isRecording = false;
 let recordedRequests = [];
 let currentDomain = null;
 let pendingRule = null;
-
-// Templates
-const TEMPLATES = {
-  'pcf-bundle': {
-    name: 'PCF Control Debug',
-    ruleType: 'redirect',
-    sourceUrl: '*bundle*.js',
-    targetUrl: 'http://localhost:8181/bundle.js',
-    useRegex: false,
-    resourceTypes: ['script'],
-    group: 'PCF'
-  },
-  'react-devtools': {
-    name: 'React DevTools',
-    ruleType: 'modifyHeaders',
-    sourceUrl: '*',
-    headers: [{ operation: 'remove', type: 'response', name: 'Content-Security-Policy', value: '' }],
-    useRegex: false,
-    resourceTypes: ['main_frame'],
-    group: 'React'
-  },
-  'block-analytics': {
-    name: 'Block Google Analytics',
-    ruleType: 'block',
-    sourceUrl: '*google-analytics.com*',
-    useRegex: false,
-    resourceTypes: ['script', 'xmlhttprequest'],
-    group: 'Blocking'
-  },
-  'block-ads': {
-    name: 'Block Ad Networks',
-    ruleType: 'block',
-    sourceUrl: '*doubleclick.net*',
-    useRegex: false,
-    resourceTypes: ['script', 'xmlhttprequest', 'image'],
-    group: 'Blocking'
-  },
-  'local-api': {
-    name: 'Local API Redirect',
-    ruleType: 'redirect',
-    sourceUrl: '*/api/*',
-    targetUrl: 'http://localhost:3000/api/',
-    useRegex: false,
-    resourceTypes: ['xmlhttprequest'],
-    group: 'API'
-  },
-  'cors-headers': {
-    name: 'Add CORS Headers',
-    ruleType: 'modifyHeaders',
-    sourceUrl: '*',
-    headers: [
-      { operation: 'set', type: 'response', name: 'Access-Control-Allow-Origin', value: '*' },
-      { operation: 'set', type: 'response', name: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS' }
-    ],
-    useRegex: false,
-    resourceTypes: ['xmlhttprequest'],
-    group: 'CORS'
-  },
-  'cache-disable': {
-    name: 'Disable Cache',
-    ruleType: 'modifyHeaders',
-    sourceUrl: '*',
-    headers: [
-      { operation: 'set', type: 'request', name: 'Cache-Control', value: 'no-cache' },
-      { operation: 'remove', type: 'response', name: 'ETag', value: '' }
-    ],
-    useRegex: false,
-    resourceTypes: ['script', 'stylesheet'],
-    group: 'Cache'
-  },
-  'custom-header': {
-    name: 'Custom Header',
-    ruleType: 'modifyHeaders',
-    sourceUrl: '*',
-    headers: [{ operation: 'set', type: 'request', name: 'X-Custom-Header', value: 'MyValue' }],
-    useRegex: false,
-    resourceTypes: ['xmlhttprequest'],
-    group: 'Custom'
-  }
-};
 
 async function init() {
   await loadTheme();
@@ -466,13 +386,6 @@ function setupEventListeners() {
   document.getElementById('editRuleType').addEventListener('change', handleEditRuleTypeChange);
   document.getElementById('editAddHeaderBtn')?.addEventListener('click', () => addHeaderRow('editHeadersList'));
   
-  // Templates
-  document.querySelectorAll('.template-card').forEach(card => {
-    card.addEventListener('click', () => handleTemplateClick(card.dataset.template));
-  });
-  document.getElementById('template-form').addEventListener('submit', handleTemplateSubmit);
-  document.getElementById('cancelTemplate').addEventListener('click', closeTemplateModal);
-  
   // Duplicate warning modal
   document.getElementById('addAnyway').addEventListener('click', handleAddAnyway);
   document.getElementById('cancelDuplicate').addEventListener('click', closeDuplicateModal);
@@ -495,7 +408,7 @@ function setupEventListeners() {
   document.getElementById('testPatternBtn').addEventListener('click', handleTestPattern);
   
   // Modal close on outside click
-  ['editModal', 'profileModal', 'templateModal', 'duplicateModal'].forEach(id => {
+  ['editModal', 'profileModal', 'duplicateModal'].forEach(id => {
     document.getElementById(id).addEventListener('click', (e) => {
       if (e.target.id === id) document.getElementById(id).classList.remove('active');
     });
@@ -1005,52 +918,6 @@ async function handleDuplicateRule(e) {
   await saveRules([...allRules, { ...rule, id: generateId(), name: rule.name + ' (Copy)', createdAt: new Date().toISOString() }]);
   await loadRules();
   showToast('Rule duplicated', 'success');
-}
-
-// Templates
-function handleTemplateClick(templateId) {
-  const template = TEMPLATES[templateId];
-  if (!template) return;
-  
-  // Pre-fill form with template
-  document.getElementById('ruleName').value = template.name;
-  document.getElementById('ruleType').value = template.ruleType;
-  document.getElementById('sourceUrl').value = template.sourceUrl;
-  document.getElementById('targetUrl').value = template.targetUrl || '';
-  document.getElementById('ruleGroup').value = template.group || '';
-  document.getElementById('useRegex').checked = template.useRegex;
-  
-  // Set resource types
-  document.querySelectorAll('input[name="resourceType"]').forEach(cb => {
-    cb.checked = template.resourceTypes.includes(cb.value);
-  });
-  
-  // Headers
-  if (template.headers) {
-    const headersList = document.getElementById('headersList');
-    headersList.innerHTML = '';
-    template.headers.forEach(h => addHeaderRow('headersList', h));
-  }
-  
-  handleRuleTypeChange();
-  
-  // Switch to rules tab and show form
-  document.querySelector('[data-tab="rules"]').click();
-  document.getElementById('addRuleFormContainer').classList.remove('hidden');
-  const btn = document.getElementById('toggleAddForm');
-  btn.innerHTML = '<span class="btn-icon">−</span> Cancel';
-  btn.classList.replace('btn-primary', 'btn-secondary');
-  
-  showToast('Template loaded - customize and save', 'info');
-}
-
-function handleTemplateSubmit(e) {
-  e.preventDefault();
-  closeTemplateModal();
-}
-
-function closeTemplateModal() {
-  document.getElementById('templateModal').classList.remove('active');
 }
 
 // Export/Import

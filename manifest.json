@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "HotSwap",
-  "version": "3.0.0",
+  "version": "1.1.1.0",
   "description": "Advanced URL redirect, block, and header modification for development debugging",
   "author": "Krunal Patel",
   "homepage_url": "https://github.com/krunal039/HotSwap",

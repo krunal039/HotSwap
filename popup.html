@@ -53,8 +53,8 @@
     <!-- Tabs -->
     <nav class="tabs">
       <button class="tab-btn active" data-tab="rules">Rules</button>
-      <button class="tab-btn" data-tab="templates">Templates</button>
       <button class="tab-btn" data-tab="logs">Logs</button>
+      <button class="tab-btn" data-tab="help">Help</button>
       <button class="tab-btn" data-tab="import">Settings</button>
     </nav>
 
@@ -206,69 +206,129 @@
       </div>
     </section>
 
-    <!-- Templates Tab -->
-    <section id="templates-tab" class="tab-content">
-      <div class="templates-header">
-        <h3>Quick Templates</h3>
-        <p class="templates-desc">Click a template to add it as a new rule</p>
+    <!-- Help Tab -->
+    <section id="help-tab" class="tab-content">
+      <div class="help-about">
+        <div class="help-logo">
+          <span class="logo-icon">⇄</span>
+          <div class="logo-text">
+            <h2>HotSwap</h2>
+            <span class="version-badge">v1.1.1.0</span>
+          </div>
+        </div>
+        <p class="help-tagline">URL Redirect, Block & Header Modification for Development</p>
+        <div class="help-meta">
+          <p><strong>Created by:</strong> Krunal Patel</p>
+          <p><strong>License:</strong> MIT License</p>
+          <p><a href="https://github.com/krunal039/HotSwap" target="_blank">GitHub Repository</a></p>
+        </div>
       </div>
-      <div class="templates-grid">
-        <div class="template-card" data-template="pcf-bundle">
-          <div class="template-icon">🎮</div>
-          <div class="template-info">
-            <h4>PCF Control Debug</h4>
-            <p>Redirect PCF bundle.js to localhost</p>
+
+      <div class="help-divider"></div>
+
+      <div class="help-section">
+        <h3>Quick Start</h3>
+        <ol class="help-steps">
+          <li>Click <strong>"+ Add Rule"</strong></li>
+          <li>Enter a <strong>Rule Name</strong> (e.g., "My PCF Debug")</li>
+          <li>Select <strong>Type</strong>: Redirect, Block, or Headers</li>
+          <li>Enter <strong>Source URL Pattern</strong> (e.g., <code>*bundle*.js</code>)</li>
+          <li>Enter <strong>Target URL</strong> for redirects</li>
+          <li>Click <strong>Add Rule</strong> and refresh your page!</li>
+        </ol>
+      </div>
+
+      <div class="help-divider"></div>
+
+      <div class="help-section">
+        <h3>URL Patterns</h3>
+        
+        <h4>Simple Patterns (Regex OFF)</h4>
+        <p class="help-description">Use <code>*</code> as a wildcard to match any characters.</p>
+        <div class="help-examples">
+          <div class="example">
+            <code>*bundle*.js</code>
+            <span>Matches any URL containing "bundle" ending in ".js"</span>
+          </div>
+          <div class="example">
+            <code>*cdn.example.com/*.js</code>
+            <span>Matches JS files from cdn.example.com</span>
           </div>
         </div>
-        <div class="template-card" data-template="react-devtools">
-          <div class="template-icon">⚛️</div>
-          <div class="template-info">
-            <h4>React DevTools</h4>
-            <p>Enable React DevTools in production</p>
+
+        <h4>Regex Patterns with Capture Groups</h4>
+        <p class="help-description">Use full regex syntax. Reference captured groups in target URL with $1, $2, etc.</p>
+        <div class="help-examples">
+          <div class="example">
+            <code>.*/(bundle\.[A-Z0-9]+\.js)$</code>
+            <span>Source: Captures filename in $1</span>
+          </div>
+          <div class="example">
+            <code>http://localhost:8181/$1</code>
+            <span>Target: Uses captured filename</span>
           </div>
         </div>
-        <div class="template-card" data-template="block-analytics">
-          <div class="template-icon">📊</div>
-          <div class="template-info">
-            <h4>Block Analytics</h4>
-            <p>Block Google Analytics & tracking</p>
+
+        <div class="help-warning">
+          <strong>Common Mistake:</strong> Using <code>*bundle*.js</code> with Regex ON won't work! 
+          In regex, <code>*</code> means "repeat previous character". Use <code>.*</code> instead.
+        </div>
+      </div>
+
+      <div class="help-divider"></div>
+
+      <div class="help-section">
+        <h3>Features</h3>
+        <ul class="help-features">
+          <li><strong>Redirect:</strong> Replace production URLs with localhost for debugging</li>
+          <li><strong>Block:</strong> Block unwanted requests (analytics, ads, etc.)</li>
+          <li><strong>Headers:</strong> Add, remove, or modify HTTP headers</li>
+          <li><strong>Capture Groups:</strong> Use $1, $2 in redirect URLs for dynamic rewriting</li>
+          <li><strong>Profiles:</strong> Switch between different rule sets quickly</li>
+          <li><strong>Groups & Colors:</strong> Organize rules with groups and color tags</li>
+          <li><strong>Undo/Redo:</strong> Ctrl+Z / Ctrl+Y to undo and redo changes</li>
+          <li><strong>Bulk Actions:</strong> Select and manage multiple rules at once</li>
+          <li><strong>Keyboard Shortcuts:</strong> Navigate and manage rules with keyboard</li>
+          <li><strong>Strip CSP Headers:</strong> Automatically removes CSP so localhost works</li>
+          <li><strong>Dark Mode:</strong> Toggle with the moon icon</li>
+          <li><strong>Import/Export:</strong> Share configurations as JSON</li>
+        </ul>
+      </div>
+
+      <div class="help-divider"></div>
+
+      <div class="help-section">
+        <h3>Troubleshooting</h3>
+        <div class="help-faq">
+          <div class="faq-item">
+            <strong>Rules not working?</strong>
+            <p>Go to Settings > Click "View Chrome Rules". If empty, your pattern is invalid.</p>
+          </div>
+          <div class="faq-item">
+            <strong>CSP Error?</strong>
+            <p>Make sure "Strip CSP" is ON. Add the domain to "Limit to Domains" field.</p>
+          </div>
+          <div class="faq-item">
+            <strong>Capture groups not working?</strong>
+            <p>Make sure "Use Regex" is checked and parentheses surround what you want to capture.</p>
+          </div>
+          <div class="faq-item">
+            <strong>Cached response loading?</strong>
+            <p>Open DevTools > Network > check "Disable cache", then hard refresh (Ctrl+Shift+R).</p>
           </div>
         </div>
-        <div class="template-card" data-template="block-ads">
-          <div class="template-icon">🚫</div>
-          <div class="template-info">
-            <h4>Block Ads</h4>
-            <p>Block common ad networks</p>
-          </div>
-        </div>
-        <div class="template-card" data-template="local-api">
-          <div class="template-icon">🔌</div>
-          <div class="template-info">
-            <h4>Local API</h4>
-            <p>Redirect API calls to localhost</p>
-          </div>
-        </div>
-        <div class="template-card" data-template="cors-headers">
-          <div class="template-icon">🔓</div>
-          <div class="template-info">
-            <h4>Add CORS Headers</h4>
-            <p>Add permissive CORS headers</p>
-          </div>
-        </div>
-        <div class="template-card" data-template="cache-disable">
-          <div class="template-icon">🔄</div>
-          <div class="template-info">
-            <h4>Disable Cache</h4>
-            <p>Add no-cache headers</p>
-          </div>
-        </div>
-        <div class="template-card" data-template="custom-header">
-          <div class="template-icon">📝</div>
-          <div class="template-info">
-            <h4>Custom Header</h4>
-            <p>Add custom request header</p>
-          </div>
-        </div>
+      </div>
+
+      <div class="help-divider"></div>
+
+      <div class="help-section help-license">
+        <h3>MIT License</h3>
+        <p>Copyright 2026 Krunal Patel</p>
+        <p class="license-text">
+          Permission is hereby granted, free of charge, to any person obtaining a copy of this software 
+          to deal in the Software without restriction, including the rights to use, copy, modify, merge, 
+          publish, distribute, sublicense, and/or sell copies of the Software.
+        </p>
       </div>
     </section>
 
@@ -393,7 +453,7 @@
         <div class="form-group">
           <label>About</label>
           <div class="about-info">
-            <p><strong>HotSwap</strong> v3.0.0</p>
+            <p><strong>HotSwap</strong> v1.1.1.0</p>
             <p>Created by Krunal Patel</p>
             <p><a href="https://github.com/krunal039/HotSwap" target="_blank">GitHub</a> | MIT License</p>
           </div>
@@ -495,20 +555,6 @@
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">Create</button>
             <button type="button" class="btn btn-secondary" id="cancelProfile">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </div>
-    
-    <!-- Template Modal -->
-    <div id="templateModal" class="modal">
-      <div class="modal-content">
-        <h2 id="templateModalTitle">Configure Template</h2>
-        <form id="template-form">
-          <div id="templateFields"></div>
-          <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Add Rule</button>
-            <button type="button" class="btn btn-secondary" id="cancelTemplate">Cancel</button>
           </div>
         </form>
       </div>
