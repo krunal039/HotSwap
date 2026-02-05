@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URL Override</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-top">
+        <h1>URL Override</h1>
+        <div class="global-toggle">
+          <label class="switch">
+            <input type="checkbox" id="globalEnabled">
+            <span class="slider"></span>
+          </label>
+          <span id="globalStatus">Enabled</span>
+        </div>
+      </div>
+      <div class="header-options">
+        <label class="csp-toggle">
+          <input type="checkbox" id="stripCSP" checked>
+          <span>Strip CSP Headers</span>
+        </label>
+      </div>
+    </header>
+
+    <!-- Tabs -->
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="rules">Rules</button>
+      <button class="tab-btn" data-tab="add">Add Rule</button>
+      <button class="tab-btn" data-tab="logs">Logs</button>
+      <button class="tab-btn" data-tab="import">Settings</button>
+    </nav>
+
+    <!-- Rules List Tab -->
+    <section id="rules-tab" class="tab-content active">
+      <div id="rules-list" class="rules-list">
+        <p class="empty-state">No redirect rules configured. Add a rule to get started.</p>
+      </div>
+    </section>
+
+    <!-- Add Rule Tab -->
+    <section id="add-tab" class="tab-content">
+      <form id="add-rule-form" class="rule-form">
+        <div class="form-group">
+          <label for="ruleName">Rule Name</label>
+          <input type="text" id="ruleName" placeholder="e.g., PCF Control Debug" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="sourceUrl">Source URL Pattern</label>
+          <input type="text" id="sourceUrl" placeholder="e.g., https://abc.com/pqr/as.js" required>
+          <div class="pattern-type">
+            <label class="checkbox-inline">
+              <input type="checkbox" id="useRegex"> Use Regex Pattern
+            </label>
+          </div>
+          <small class="pattern-help" id="patternHelp">
+            <strong>Simple pattern:</strong> Use <code>*</code> as wildcard. Example: <code>*://*.dynamics.com/*bundle.js</code>
+          </small>
+        </div>
+        
+        <div class="form-group">
+          <label for="targetUrl">Target URL (Redirect To)</label>
+          <input type="text" id="targetUrl" placeholder="e.g., https://localhost:8080/bundle.js" required>
+          <small>The local URL to redirect to</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="domains">Limit to Domains (optional)</label>
+          <input type="text" id="domains" placeholder="e.g., crm.dynamics.com, app.powerplatform.com">
+          <small>Comma-separated domains. Leave empty for all domains.</small>
+        </div>
+        
+        <div class="form-group">
+          <label>Resource Types</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="resourceType" value="script" checked> Scripts</label>
+            <label><input type="checkbox" name="resourceType" value="xmlhttprequest" checked> XHR/Fetch</label>
+            <label><input type="checkbox" name="resourceType" value="stylesheet"> CSS</label>
+            <label><input type="checkbox" name="resourceType" value="image"> Images</label>
+            <label><input type="checkbox" name="resourceType" value="font"> Fonts</label>
+            <label><input type="checkbox" name="resourceType" value="other"> Other</label>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="priority">Priority</label>
+          <input type="number" id="priority" value="1" min="1" max="100">
+          <small>Higher priority rules take precedence (1-100)</small>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Add Rule</button>
+          <button type="reset" class="btn btn-secondary">Clear</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Logs Tab -->
+    <section id="logs-tab" class="tab-content">
+      <div class="logs-header">
+        <h3>Redirect Logs</h3>
+        <button id="clearLogsBtn" class="btn btn-secondary btn-small">Clear Logs</button>
+      </div>
+      <div class="logs-info">
+        <small>Shows URLs that have been redirected by your rules. Logs are cleared when the extension reloads.</small>
+      </div>
+      <div id="logs-list" class="logs-list">
+        <p class="empty-state">No redirects logged yet. Redirects will appear here when URLs match your rules.</p>
+      </div>
+    </section>
+
+    <!-- Import/Export Tab -->
+    <section id="import-tab" class="tab-content">
+      <div class="import-export">
+        <div class="form-group">
+          <label>Export Rules</label>
+          <button id="exportBtn" class="btn btn-secondary">Export to JSON</button>
+        </div>
+        
+        <div class="form-group">
+          <label>Import Rules</label>
+          <textarea id="importData" placeholder="Paste JSON configuration here..."></textarea>
+          <button id="importBtn" class="btn btn-primary">Import Rules</button>
+        </div>
+        
+        <div class="form-group danger-zone">
+          <label>Danger Zone</label>
+          <button id="clearAllBtn" class="btn btn-danger">Clear All Rules</button>
+        </div>
+        
+        <div class="form-group debug-section">
+          <label>Debug Tools</label>
+          <button id="viewActiveRulesBtn" class="btn btn-secondary">View Active Chrome Rules</button>
+          <div id="activeRulesOutput" class="debug-output"></div>
+        </div>
+        
+        <div class="form-group">
+          <label>Test Pattern</label>
+          <input type="text" id="testPattern" placeholder="Your pattern (e.g., *bundle*.js)">
+          <label class="checkbox-inline" style="margin-top: 6px;">
+            <input type="checkbox" id="testUseRegex"> Regex
+          </label>
+          <input type="text" id="testUrl" placeholder="URL to test against" style="margin-top: 6px;">
+          <button id="testPatternBtn" class="btn btn-secondary" style="margin-top: 6px;">Test Match</button>
+          <div id="testResult" class="debug-output"></div>
+        </div>
+        
+        <div class="about-section">
+          <div class="about-header">
+            <h3>URL Override - Dev Redirect</h3>
+            <span class="version">v1.0.0</span>
+          </div>
+          <p class="about-description">
+            Redirect URLs from production to localhost for development debugging. 
+            Built for PCF controls, Dynamics 365, and Power Apps development.
+          </p>
+          <p class="about-author">Created by <strong>Krunal Patel</strong></p>
+          <p class="about-license">MIT License</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+      <div class="modal-content">
+        <h2>Edit Rule</h2>
+        <form id="edit-rule-form" class="rule-form">
+          <input type="hidden" id="editIndex">
+          
+          <div class="form-group">
+            <label for="editRuleName">Rule Name</label>
+            <input type="text" id="editRuleName" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="editSourceUrl">Source URL Pattern</label>
+            <input type="text" id="editSourceUrl" required>
+            <div class="pattern-type">
+              <label class="checkbox-inline">
+                <input type="checkbox" id="editUseRegex"> Use Regex Pattern
+              </label>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="editTargetUrl">Target URL</label>
+            <input type="text" id="editTargetUrl" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="editDomains">Limit to Domains</label>
+            <input type="text" id="editDomains">
+          </div>
+          
+          <div class="form-group">
+            <label for="editPriority">Priority</label>
+            <input type="number" id="editPriority" min="1" max="100">
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="button" class="btn btn-secondary" id="cancelEdit">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
