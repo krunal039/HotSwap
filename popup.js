@@ -375,10 +375,13 @@ function setupEventListeners() {
       const picker = button.closest('.color-picker');
       picker.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
       button.classList.add('selected');
-      // Find the hidden input - it's the next sibling of the color-picker
-      const input = picker.nextElementSibling;
-      if (input && input.type === 'hidden') {
+      // Find the hidden input by ID based on which picker
+      const isEditPicker = picker.id === 'editColorPicker';
+      const inputId = isEditPicker ? 'editRuleColor' : 'ruleColor';
+      const input = document.getElementById(inputId);
+      if (input) {
         input.value = button.dataset.color || '';
+        console.log('Color set:', inputId, '=', input.value);
       }
     });
   });

@@ -636,12 +636,11 @@ input:checked + .slider:before { transform: translateX(18px); }
 }
 .rule-card.dragging { opacity: 0.5; }
 
-.rule-card[data-color]:not([data-color=""]) { border-left: 4px solid; }
-.rule-card[data-color="#EF4444"] { border-left-color: #EF4444; }
-.rule-card[data-color="#F59E0B"] { border-left-color: #F59E0B; }
-.rule-card[data-color="#10B981"] { border-left-color: #10B981; }
-.rule-card[data-color="#3B82F6"] { border-left-color: #3B82F6; }
-.rule-card[data-color="#8B5CF6"] { border-left-color: #8B5CF6; }
+.rule-card[data-color="#EF4444"] { border-left: 4px solid #EF4444 !important; }
+.rule-card[data-color="#F59E0B"] { border-left: 4px solid #F59E0B !important; }
+.rule-card[data-color="#10B981"] { border-left: 4px solid #10B981 !important; }
+.rule-card[data-color="#3B82F6"] { border-left: 4px solid #3B82F6 !important; }
+.rule-card[data-color="#8B5CF6"] { border-left: 4px solid #8B5CF6 !important; }
 
 .rule-card-inner { 
   display: flex; 
