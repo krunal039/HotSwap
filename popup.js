@@ -67,6 +67,7 @@ function renderRules(rules) {
       </div>
       <div class="rule-actions">
         <button class="btn-edit" data-index="${index}">Edit</button>
+        <button class="btn-duplicate" data-index="${index}">Duplicate</button>
         <button class="btn-delete" data-index="${index}">Delete</button>
       </div>
     </div>
@@ -81,9 +82,36 @@ function renderRules(rules) {
     btn.addEventListener('click', handleEditRule);
   });
   
+  container.querySelectorAll('.btn-duplicate').forEach(btn => {
+    btn.addEventListener('click', handleDuplicateRule);
+  });
+  
   container.querySelectorAll('.btn-delete').forEach(btn => {
     btn.addEventListener('click', handleDeleteRule);
   });
+}
+
+// Handle duplicate rule
+async function handleDuplicateRule(e) {
+  const index = parseInt(e.target.dataset.index);
+  const { rules = [] } = await chrome.storage.local.get('rules');
+  const rule = rules[index];
+  
+  if (!rule) return;
+  
+  // Create a copy with new ID and name
+  const newRule = {
+    ...rule,
+    id: generateId(),
+    name: rule.name + ' (Copy)',
+    createdAt: new Date().toISOString()
+  };
+  
+  rules.push(newRule);
+  await chrome.storage.local.set({ rules });
+  
+  await loadRules();
+  showToast('Rule duplicated', 'success');
 }
 
 // Setup event listeners
@@ -98,6 +126,10 @@ function setupEventListeners() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', handleTabClick);
   });
+  
+  // Add rule form toggle
+  document.getElementById('toggleAddForm').addEventListener('click', toggleAddForm);
+  document.getElementById('cancelAddRule').addEventListener('click', hideAddForm);
   
   // Add rule form
   document.getElementById('add-rule-form').addEventListener('submit', handleAddRule);
@@ -129,22 +161,48 @@ function setupEventListeners() {
   });
 }
 
+// Toggle add form visibility
+function toggleAddForm() {
+  const container = document.getElementById('addRuleFormContainer');
+  const btn = document.getElementById('toggleAddForm');
+  
+  if (container.classList.contains('hidden')) {
+    container.classList.remove('hidden');
+    btn.innerHTML = '<span class="btn-icon">−</span> Cancel';
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-secondary');
+    document.getElementById('ruleName').focus();
+  } else {
+    hideAddForm();
+  }
+}
+
+// Hide add form
+function hideAddForm() {
+  const container = document.getElementById('addRuleFormContainer');
+  const btn = document.getElementById('toggleAddForm');
+  
+  container.classList.add('hidden');
+  btn.innerHTML = '<span class="btn-icon">+</span> Add New Rule';
+  btn.classList.remove('btn-secondary');
+  btn.classList.add('btn-primary');
+  document.getElementById('add-rule-form').reset();
+  document.getElementById('priority').value = '1';
+}
+
 // Update pattern help text based on regex toggle
 function updatePatternHelp() {
   const useRegex = document.getElementById('useRegex').checked;
-  const helpEl = document.getElementById('patternHelp');
+  const hintEl = document.getElementById('patternHint');
   
-  if (useRegex) {
-    helpEl.innerHTML = `
-      <strong>Regex pattern:</strong> Use JavaScript regex syntax.<br>
-      Example: <code>.*\\.dynamics\\.com/.*\\.bundle\\.js</code><br>
-      Tip: Escape dots with <code>\\.</code> and use <code>.*</code> for wildcards
-    `;
-  } else {
-    helpEl.innerHTML = `
-      <strong>Simple pattern:</strong> Use <code>*</code> as wildcard.<br>
-      Example: <code>*://*.dynamics.com/*bundle.js</code>
-    `;
+  if (hintEl) {
+    if (useRegex) {
+      hintEl.textContent = 'Using regex (.*\\.js)';
+      hintEl.style.color = '#dc3545';
+    } else {
+      hintEl.textContent = 'Using wildcards (*)';
+      hintEl.style.color = '#667eea';
+    }
   }
 }
 
@@ -222,13 +280,13 @@ async function handleAddRule(e) {
   rules.push(newRule);
   await chrome.storage.local.set({ rules });
   
-  // Reset form
+  // Reset form and hide
   e.target.reset();
   document.getElementById('priority').value = '1';
+  hideAddForm();
   
-  // Reload rules and switch to rules tab
+  // Reload rules
   await loadRules();
-  document.querySelector('[data-tab="rules"]').click();
   
   showToast('Rule added successfully', 'success');
 }

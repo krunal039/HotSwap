@@ -113,8 +113,14 @@ async function applyRules() {
     if (stripCSP && newRules.length > 0) {
       const cspRules = createCSPStrippingRules(domainsNeedingCSPStrip);
       newRules.push(...cspRules);
-      console.log(`URL Override: Adding ${cspRules.length} CSP stripping rules`);
+      console.log(`HotSwap: Adding ${cspRules.length} CSP stripping rules`);
     }
+    
+    // Add cache-busting rules for each redirect pattern (dynamic, any domain)
+    const cacheBustStartId = CSP_RULE_ID_START + 1000;
+    const cacheBustRules = createCacheBustingRules(rules, cacheBustStartId);
+    newRules.push(...cacheBustRules);
+    console.log(`HotSwap: Adding ${cacheBustRules.length} cache-busting rules`);
     
     // Add new rules
     if (newRules.length > 0) {
@@ -137,12 +143,20 @@ function createCSPStrippingRules(domains) {
   const rules = [];
   let ruleId = CSP_RULE_ID_START;
   
-  // Headers to remove/modify that enforce CSP
+  // Headers to remove that enforce CSP
   const cspHeaders = [
     'content-security-policy',
     'content-security-policy-report-only',
     'x-content-security-policy',
     'x-webkit-csp'
+  ];
+  
+  // Headers to remove that cause caching
+  const cacheHeaders = [
+    'cache-control',
+    'expires',
+    'etag',
+    'last-modified'
   ];
   
   // If specific domains are configured, create rules for each
@@ -184,6 +198,7 @@ function createCSPStrippingRules(domains) {
         requestDomains: domainList
       }
     });
+    
   } else {
     // No specific domains - create a broader rule for common dev scenarios
     // This targets dynamics/powerapps domains commonly used with PCF
@@ -192,7 +207,8 @@ function createCSPStrippingRules(domains) {
       'crm.dynamics.com', 
       'powerapps.com',
       'make.powerapps.com',
-      'apps.powerapps.com'
+      'apps.powerapps.com',
+      'content.powerapps.com'
     ];
     
     rules.push({
@@ -211,9 +227,73 @@ function createCSPStrippingRules(domains) {
         requestDomains: defaultDomains
       }
     });
+    
   }
   
   return rules;
+}
+
+// Create cache-busting rules for each redirect rule's source pattern
+function createCacheBustingRules(rules, startId) {
+  const cacheBustingRules = [];
+  let ruleId = startId;
+  
+  const responseCacheHeaders = [
+    'cache-control',
+    'expires', 
+    'etag',
+    'last-modified'
+  ];
+  
+  for (const rule of rules) {
+    if (!rule.enabled || !rule.sourceUrl) continue;
+    
+    // Rule to strip cache headers from RESPONSE (prevents future caching)
+    const responseRule = {
+      id: ruleId++,
+      priority: 1,
+      action: {
+        type: 'modifyHeaders',
+        responseHeaders: responseCacheHeaders.map(header => ({
+          header: header,
+          operation: 'remove'
+        }))
+      },
+      condition: {
+        resourceTypes: ['script', 'stylesheet', 'xmlhttprequest']
+      }
+    };
+    
+    // Rule to add no-cache to REQUEST (forces revalidation of cached content)
+    const requestRule = {
+      id: ruleId++,
+      priority: 1,
+      action: {
+        type: 'modifyHeaders',
+        requestHeaders: [
+          { header: 'Cache-Control', operation: 'set', value: 'no-cache, no-store, must-revalidate' },
+          { header: 'Pragma', operation: 'set', value: 'no-cache' }
+        ]
+      },
+      condition: {
+        resourceTypes: ['script', 'stylesheet', 'xmlhttprequest']
+      }
+    };
+    
+    // Use same pattern type as the redirect rule
+    if (rule.useRegex) {
+      responseRule.condition.regexFilter = rule.sourceUrl;
+      requestRule.condition.regexFilter = rule.sourceUrl;
+    } else {
+      responseRule.condition.urlFilter = rule.sourceUrl;
+      requestRule.condition.urlFilter = rule.sourceUrl;
+    }
+    
+    cacheBustingRules.push(responseRule);
+    cacheBustingRules.push(requestRule);
+  }
+  
+  return cacheBustingRules;
 }
 
 // Get resource types array

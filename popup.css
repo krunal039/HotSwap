@@ -161,6 +161,111 @@ input:checked + .slider:before {
   display: block;
 }
 
+/* Add Rule Header */
+.add-rule-header {
+  margin-bottom: 16px;
+}
+
+.btn-add-new {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-icon {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Add Rule Form Container */
+.add-rule-form-container {
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  animation: slideDown 0.2s ease;
+}
+
+.add-rule-form-container.hidden {
+  display: none;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.optional {
+  color: #888;
+  font-weight: normal;
+  font-size: 11px;
+}
+
+.pattern-hint {
+  font-size: 11px;
+  color: #667eea;
+  margin-left: 10px;
+}
+
+.input-small {
+  width: 80px;
+}
+
+/* Advanced Options */
+.advanced-options {
+  margin-top: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: white;
+}
+
+.advanced-options summary {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.advanced-options summary:hover {
+  color: #667eea;
+}
+
+.advanced-options[open] summary {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.advanced-options .form-group {
+  padding: 12px;
+  margin: 0;
+}
+
+.checkbox-group.compact {
+  gap: 8px;
+}
+
+.checkbox-group.compact label {
+  font-size: 12px;
+}
+
 /* Rules List */
 .rules-list {
   display: flex;
@@ -294,6 +399,17 @@ input:checked + .slider:before {
 
 .btn-delete:hover {
   background: #dc3545;
+  color: white;
+}
+
+.btn-duplicate {
+  background: #fff;
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.btn-duplicate:hover {
+  background: #28a745;
   color: white;
 }
 

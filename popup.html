@@ -31,75 +31,79 @@
     <!-- Tabs -->
     <nav class="tabs">
       <button class="tab-btn active" data-tab="rules">Rules</button>
-      <button class="tab-btn" data-tab="add">Add Rule</button>
       <button class="tab-btn" data-tab="logs">Logs</button>
       <button class="tab-btn" data-tab="help">Help</button>
       <button class="tab-btn" data-tab="import">Settings</button>
     </nav>
 
-    <!-- Rules List Tab -->
+    <!-- Rules Tab (Combined Add/Edit/Delete) -->
     <section id="rules-tab" class="tab-content active">
-      <div id="rules-list" class="rules-list">
-        <p class="empty-state">No redirect rules configured. Add a rule to get started.</p>
+      <!-- Add New Rule Button -->
+      <div class="add-rule-header">
+        <button id="toggleAddForm" class="btn btn-primary btn-add-new">
+          <span class="btn-icon">+</span> Add New Rule
+        </button>
       </div>
-    </section>
-
-    <!-- Add Rule Tab -->
-    <section id="add-tab" class="tab-content">
-      <form id="add-rule-form" class="rule-form">
-        <div class="form-group">
-          <label for="ruleName">Rule Name</label>
-          <input type="text" id="ruleName" placeholder="e.g., PCF Control Debug" required>
-        </div>
-        
-        <div class="form-group">
-          <label for="sourceUrl">Source URL Pattern</label>
-          <input type="text" id="sourceUrl" placeholder="e.g., https://abc.com/pqr/as.js" required>
-          <div class="pattern-type">
-            <label class="checkbox-inline">
-              <input type="checkbox" id="useRegex"> Use Regex Pattern
-            </label>
+      
+      <!-- Add Rule Form (Collapsible) -->
+      <div id="addRuleFormContainer" class="add-rule-form-container hidden">
+        <form id="add-rule-form" class="rule-form">
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="ruleName">Rule Name</label>
+              <input type="text" id="ruleName" placeholder="e.g., PCF Control Debug" required>
+            </div>
           </div>
-          <small class="pattern-help" id="patternHelp">
-            <strong>Simple pattern:</strong> Use <code>*</code> as wildcard. Example: <code>*://*.dynamics.com/*bundle.js</code>
-          </small>
-        </div>
-        
-        <div class="form-group">
-          <label for="targetUrl">Target URL (Redirect To)</label>
-          <input type="text" id="targetUrl" placeholder="e.g., https://localhost:8080/bundle.js" required>
-          <small>The local URL to redirect to</small>
-        </div>
-        
-        <div class="form-group">
-          <label for="domains">Limit to Domains (optional)</label>
-          <input type="text" id="domains" placeholder="e.g., crm.dynamics.com, app.powerplatform.com">
-          <small>Comma-separated domains. Leave empty for all domains.</small>
-        </div>
-        
-        <div class="form-group">
-          <label>Resource Types</label>
-          <div class="checkbox-group">
-            <label><input type="checkbox" name="resourceType" value="script" checked> Scripts</label>
-            <label><input type="checkbox" name="resourceType" value="xmlhttprequest" checked> XHR/Fetch</label>
-            <label><input type="checkbox" name="resourceType" value="stylesheet"> CSS</label>
-            <label><input type="checkbox" name="resourceType" value="image"> Images</label>
-            <label><input type="checkbox" name="resourceType" value="font"> Fonts</label>
-            <label><input type="checkbox" name="resourceType" value="other"> Other</label>
+          
+          <div class="form-group">
+            <label for="sourceUrl">Source URL Pattern</label>
+            <input type="text" id="sourceUrl" placeholder="e.g., *bundle*.js or *cdn.example.com/*.js" required>
+            <div class="pattern-type">
+              <label class="checkbox-inline">
+                <input type="checkbox" id="useRegex"> Use Regex Pattern
+              </label>
+              <span class="pattern-hint" id="patternHint">Using wildcards (*)</span>
+            </div>
           </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="priority">Priority</label>
-          <input type="number" id="priority" value="1" min="1" max="100">
-          <small>Higher priority rules take precedence (1-100)</small>
-        </div>
-        
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary">Add Rule</button>
-          <button type="reset" class="btn btn-secondary">Clear</button>
-        </div>
-      </form>
+          
+          <div class="form-group">
+            <label for="targetUrl">Target URL (Redirect To)</label>
+            <input type="text" id="targetUrl" placeholder="e.g., http://localhost:8181/bundle.js" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="domains">Limit to Domains <span class="optional">(optional)</span></label>
+            <input type="text" id="domains" placeholder="e.g., crm.dynamics.com">
+          </div>
+          
+          <details class="advanced-options">
+            <summary>Advanced Options</summary>
+            <div class="form-group">
+              <label>Resource Types</label>
+              <div class="checkbox-group compact">
+                <label><input type="checkbox" name="resourceType" value="script" checked> Scripts</label>
+                <label><input type="checkbox" name="resourceType" value="xmlhttprequest" checked> XHR</label>
+                <label><input type="checkbox" name="resourceType" value="stylesheet"> CSS</label>
+                <label><input type="checkbox" name="resourceType" value="image"> Images</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="priority">Priority</label>
+              <input type="number" id="priority" value="1" min="1" max="100" class="input-small">
+            </div>
+          </details>
+          
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="submitRuleBtn">Add Rule</button>
+            <button type="button" class="btn btn-secondary" id="cancelAddRule">Cancel</button>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Rules List -->
+      <div id="rules-list" class="rules-list">
+        <p class="empty-state">No redirect rules configured. Click "Add New Rule" to get started.</p>
+      </div>
     </section>
 
     <!-- Logs Tab -->
