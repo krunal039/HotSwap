@@ -370,11 +370,16 @@ function setupEventListeners() {
   document.querySelectorAll('.color-picker .color-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      const picker = e.target.closest('.color-picker');
+      const button = e.target.closest('.color-btn');
+      if (!button) return;
+      const picker = button.closest('.color-picker');
       picker.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
-      e.target.classList.add('selected');
-      const input = picker.nextElementSibling || document.getElementById('ruleColor');
-      if (input) input.value = e.target.dataset.color;
+      button.classList.add('selected');
+      // Find the hidden input - it's the next sibling of the color-picker
+      const input = picker.nextElementSibling;
+      if (input && input.type === 'hidden') {
+        input.value = button.dataset.color || '';
+      }
     });
   });
   
@@ -737,6 +742,13 @@ function hideAddForm() {
   btn.innerHTML = '<span class="btn-icon">+</span> Add Rule';
   btn.classList.replace('btn-secondary', 'btn-primary');
   document.getElementById('add-rule-form').reset();
+  // Reset color picker visual state
+  const colorPicker = document.querySelector('#addRuleFormContainer .color-picker');
+  if (colorPicker) {
+    colorPicker.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+    colorPicker.querySelector('.color-btn[data-color=""]').classList.add('selected');
+  }
+  document.getElementById('ruleColor').value = '';
   document.getElementById('headersList').innerHTML = `<div class="header-row">
     <select class="header-operation"><option value="set">Set</option><option value="remove">Remove</option><option value="append">Append</option></select>
     <select class="header-type"><option value="request">Request</option><option value="response">Response</option></select>
