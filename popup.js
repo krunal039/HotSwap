@@ -33,7 +33,13 @@ async function init() {
 // Stats polling
 function startStatsPolling() {
   if (statsInterval) clearInterval(statsInterval);
-  statsInterval = setInterval(loadStats, 2000);
+  statsInterval = setInterval(() => {
+    loadStats();
+    // Also refresh logs if logs tab is active
+    if (document.getElementById('logs-tab').classList.contains('active')) {
+      loadLogs();
+    }
+  }, 2000);
 }
 
 window.addEventListener('unload', () => {
