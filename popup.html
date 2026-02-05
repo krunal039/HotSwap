@@ -33,6 +33,7 @@
       <button class="tab-btn active" data-tab="rules">Rules</button>
       <button class="tab-btn" data-tab="add">Add Rule</button>
       <button class="tab-btn" data-tab="logs">Logs</button>
+      <button class="tab-btn" data-tab="help">Help</button>
       <button class="tab-btn" data-tab="import">Settings</button>
     </nav>
 
@@ -115,6 +116,126 @@
       </div>
     </section>
 
+    <!-- Help Tab -->
+    <section id="help-tab" class="tab-content">
+      <!-- About Section -->
+      <div class="help-about">
+        <div class="help-logo">
+          <span class="logo-icon">⇄</span>
+          <div class="logo-text">
+            <h2>HotSwap</h2>
+            <span class="version-badge">v1.0.0</span>
+          </div>
+        </div>
+        <p class="help-tagline">URL Redirect Extension for Development</p>
+        <div class="help-meta">
+          <p><strong>Created by:</strong> Krunal Patel</p>
+          <p><strong>License:</strong> MIT License</p>
+          <p><a href="https://github.com/krunal039/HotSwap" target="_blank">GitHub Repository</a></p>
+        </div>
+      </div>
+
+      <div class="help-divider"></div>
+
+      <!-- Quick Start -->
+      <div class="help-section">
+        <h3>Quick Start</h3>
+        <ol class="help-steps">
+          <li>Go to <strong>Add Rule</strong> tab</li>
+          <li>Enter a <strong>Rule Name</strong> (e.g., "My PCF Debug")</li>
+          <li>Enter <strong>Source URL Pattern</strong> (e.g., <code>*bundle*.js</code>)</li>
+          <li>Enter <strong>Target URL</strong> (e.g., <code>https://localhost:8181/bundle.js</code>)</li>
+          <li>Click <strong>Add Rule</strong></li>
+          <li>Refresh your page!</li>
+        </ol>
+      </div>
+
+      <div class="help-divider"></div>
+
+      <!-- Pattern Help -->
+      <div class="help-section">
+        <h3>URL Patterns</h3>
+        
+        <h4>Simple Patterns (Regex OFF)</h4>
+        <p class="help-description">Use <code>*</code> as a wildcard to match any characters.</p>
+        <div class="help-examples">
+          <div class="example">
+            <code>*bundle*.js</code>
+            <span>Matches any URL containing "bundle" ending in ".js"</span>
+          </div>
+          <div class="example">
+            <code>*cdn.example.com/*.js</code>
+            <span>Matches JS files from cdn.example.com</span>
+          </div>
+        </div>
+
+        <h4>Regex Patterns (Regex ON)</h4>
+        <p class="help-description">Use full JavaScript regex syntax for complex matching.</p>
+        <div class="help-examples">
+          <div class="example">
+            <code>.*bundle\.[A-Z0-9]+\.js$</code>
+            <span>Matches bundle.HASH.js files</span>
+          </div>
+          <div class="example">
+            <code>.*\.dynamics\.com/.*\.js</code>
+            <span>Matches JS from dynamics.com subdomains</span>
+          </div>
+        </div>
+
+        <div class="help-warning">
+          <strong>Common Mistake:</strong> Using <code>*bundle*.js</code> with Regex ON won't work! 
+          In regex, <code>*</code> means "repeat previous character". Use <code>.*</code> instead.
+        </div>
+      </div>
+
+      <div class="help-divider"></div>
+
+      <!-- Features -->
+      <div class="help-section">
+        <h3>Features</h3>
+        <ul class="help-features">
+          <li><strong>Strip CSP Headers:</strong> Automatically removes Content-Security-Policy headers so localhost redirects work</li>
+          <li><strong>Domain Filtering:</strong> Limit rules to specific domains (e.g., only on crm.dynamics.com)</li>
+          <li><strong>Logs:</strong> View all redirected URLs in real-time</li>
+          <li><strong>Import/Export:</strong> Share configurations as JSON</li>
+        </ul>
+      </div>
+
+      <div class="help-divider"></div>
+
+      <!-- Troubleshooting -->
+      <div class="help-section">
+        <h3>Troubleshooting</h3>
+        <div class="help-faq">
+          <div class="faq-item">
+            <strong>Rules not working?</strong>
+            <p>Go to Settings → Click "View Active Chrome Rules". If empty, your pattern is invalid.</p>
+          </div>
+          <div class="faq-item">
+            <strong>CSP Error?</strong>
+            <p>Make sure "Strip CSP Headers" is ON. Add the domain to "Limit to Domains" field.</p>
+          </div>
+          <div class="faq-item">
+            <strong>No logs showing?</strong>
+            <p>Use Settings → "Test Pattern" to verify your pattern matches the URL.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="help-divider"></div>
+
+      <!-- License -->
+      <div class="help-section help-license">
+        <h3>MIT License</h3>
+        <p>Copyright © 2026 Krunal Patel</p>
+        <p class="license-text">
+          Permission is hereby granted, free of charge, to any person obtaining a copy of this software 
+          to deal in the Software without restriction, including the rights to use, copy, modify, merge, 
+          publish, distribute, sublicense, and/or sell copies of the Software.
+        </p>
+      </div>
+    </section>
+
     <!-- Import/Export Tab -->
     <section id="import-tab" class="tab-content">
       <div class="import-export">
@@ -151,21 +272,6 @@
           <div id="testResult" class="debug-output"></div>
         </div>
         
-        <div class="about-section">
-          <div class="about-header">
-            <h3>HotSwap</h3>
-            <span class="version">v1.0.0</span>
-          </div>
-          <p class="about-description">
-            Redirect URLs from production to localhost for development debugging. 
-            Built for PCF controls, Dynamics 365, and Power Apps development.
-          </p>
-          <p class="about-author">Created by <strong>Krunal Patel</strong></p>
-          <p class="about-links">
-            <a href="https://github.com/krunal039/HotSwap" target="_blank">GitHub</a>
-          </p>
-          <p class="about-license">MIT License</p>
-        </div>
       </div>
     </section>
 

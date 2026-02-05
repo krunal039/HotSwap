@@ -502,67 +502,214 @@ input:checked + .slider:before {
   color: #6a9955;
 }
 
-/* About Section */
-.about-section {
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
+
+/* Help Tab Styles */
+.help-about {
   text-align: center;
+  padding: 20px 0;
 }
 
-.about-header {
+.help-logo {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 10px;
 }
 
-.about-header h3 {
+.logo-icon {
+  font-size: 32px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.logo-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-text h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: 24px;
   color: #333;
 }
 
-.version {
+.version-badge {
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
-  padding: 2px 8px;
-  border-radius: 10px;
+  padding: 3px 10px;
+  border-radius: 12px;
   font-size: 11px;
   font-weight: 500;
 }
 
-.about-description {
-  font-size: 12px;
+.help-tagline {
   color: #666;
-  margin-bottom: 12px;
-  line-height: 1.5;
+  font-size: 14px;
+  margin-bottom: 15px;
 }
 
-.about-author {
+.help-meta {
+  font-size: 13px;
+  color: #555;
+}
+
+.help-meta p {
+  margin: 4px 0;
+}
+
+.help-meta a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.help-meta a:hover {
+  text-decoration: underline;
+}
+
+.help-divider {
+  height: 1px;
+  background: #e0e0e0;
+  margin: 20px 0;
+}
+
+.help-section {
+  margin-bottom: 10px;
+}
+
+.help-section h3 {
+  font-size: 15px;
+  color: #333;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #667eea;
+  display: inline-block;
+}
+
+.help-section h4 {
+  font-size: 13px;
+  color: #555;
+  margin: 15px 0 8px 0;
+}
+
+.help-description {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.help-steps {
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.help-steps li {
+  margin-bottom: 4px;
+}
+
+.help-steps code {
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.help-examples {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.help-examples .example {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.help-examples .example:last-child {
+  margin-bottom: 0;
+}
+
+.help-examples .example code {
+  background: #1e1e1e;
+  color: #4ec9b0;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.help-examples .example span {
+  font-size: 11px;
+  color: #666;
+  padding-left: 4px;
+}
+
+.help-warning {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 10px 12px;
+  margin-top: 15px;
+  border-radius: 0 6px 6px 0;
+  font-size: 12px;
+  color: #856404;
+}
+
+.help-features {
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.help-features li {
+  margin-bottom: 6px;
+}
+
+.help-faq .faq-item {
+  margin-bottom: 12px;
+}
+
+.help-faq .faq-item strong {
+  display: block;
   font-size: 13px;
   color: #333;
   margin-bottom: 4px;
 }
 
-.about-license {
-  font-size: 11px;
-  color: #888;
+.help-faq .faq-item p {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
+  padding-left: 10px;
+  border-left: 2px solid #e0e0e0;
 }
 
-.about-links {
+.help-license {
+  text-align: center;
+}
+
+.help-license h3 {
+  display: block;
+  border-bottom: none;
   margin-bottom: 8px;
 }
 
-.about-links a {
-  color: #667eea;
-  text-decoration: none;
+.help-license p {
   font-size: 12px;
+  color: #666;
+  margin: 4px 0;
 }
 
-.about-links a:hover {
-  text-decoration: underline;
+.license-text {
+  font-size: 11px !important;
+  color: #888 !important;
+  line-height: 1.5;
+  max-width: 350px;
+  margin: 10px auto 0 !important;
 }
 
 /* Modal */
