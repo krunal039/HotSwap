@@ -356,8 +356,6 @@ function setupEventListeners() {
   
   // Bulk actions
   document.getElementById('selectAllRules').addEventListener('change', handleSelectAll);
-  document.getElementById('bulkEnableBtn').addEventListener('click', () => handleBulkAction('enable'));
-  document.getElementById('bulkDisableBtn').addEventListener('click', () => handleBulkAction('disable'));
   document.getElementById('bulkDeleteBtn').addEventListener('click', () => handleBulkAction('delete'));
   
   // Add rule form
