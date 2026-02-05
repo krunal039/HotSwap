@@ -476,37 +476,39 @@ input:checked + .slider:before { transform: translateX(18px); }
   flex-direction: column;
   gap: 8px;
   margin-bottom: 10px;
+  overflow: hidden;
 }
 
 .header-row {
   display: flex;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 4px;
   align-items: center;
 }
 
 .header-row select, 
 .header-row input {
-  padding: 0 8px;
+  padding: 0 6px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 11px;
-  height: 30px;
+  height: 28px;
 }
 
-.header-operation { width: 75px; flex-shrink: 0; }
-.header-type { width: 85px; flex-shrink: 0; }
-.header-name { flex: 1; min-width: 90px; }
-.header-value { flex: 1; min-width: 90px; }
+.header-operation { width: 65px; flex-shrink: 0; }
+.header-type { width: 75px; flex-shrink: 0; }
+.header-name { flex: 1; min-width: 70px; }
+.header-value { flex: 1; min-width: 70px; }
 
 .btn-remove-header {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border: none;
   background: #f0f0f0;
   border-radius: 4px;
   cursor: pointer;
   color: #666;
-  font-size: 16px;
+  font-size: 14px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
