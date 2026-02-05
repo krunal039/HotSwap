@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>URL Override</title>
+  <title>HotSwap</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
@@ -12,12 +12,15 @@
     <header class="header">
       <div class="header-top">
         <h1>HotSwap</h1>
-        <div class="global-toggle">
-          <label class="switch">
-            <input type="checkbox" id="globalEnabled">
-            <span class="slider"></span>
-          </label>
-          <span id="globalStatus">Enabled</span>
+        <div class="header-controls">
+          <button id="darkModeBtn" class="icon-btn" title="Toggle Dark Mode">🌙</button>
+          <div class="global-toggle">
+            <label class="switch">
+              <input type="checkbox" id="globalEnabled">
+              <span class="slider"></span>
+            </label>
+            <span id="globalStatus">Enabled</span>
+          </div>
         </div>
       </div>
       <div class="header-options">
@@ -25,6 +28,18 @@
           <input type="checkbox" id="stripCSP" checked>
           <span>Strip CSP Headers</span>
         </label>
+        <div class="profile-selector">
+          <select id="profileSelect">
+            <option value="default">Default Profile</option>
+          </select>
+          <button id="profileMenuBtn" class="icon-btn-small" title="Profile Options">⋮</button>
+        </div>
+      </div>
+      <div id="profileMenu" class="dropdown-menu hidden">
+        <button id="newProfileBtn">➕ New Profile</button>
+        <button id="duplicateProfileBtn">📋 Duplicate Profile</button>
+        <button id="renameProfileBtn">✏️ Rename Profile</button>
+        <button id="deleteProfileBtn" class="danger">🗑️ Delete Profile</button>
       </div>
     </header>
 
@@ -38,11 +53,12 @@
 
     <!-- Rules Tab (Combined Add/Edit/Delete) -->
     <section id="rules-tab" class="tab-content active">
-      <!-- Add New Rule Button -->
+      <!-- Add New Rule Button + Search -->
       <div class="add-rule-header">
         <button id="toggleAddForm" class="btn btn-primary btn-add-new">
           <span class="btn-icon">+</span> Add New Rule
         </button>
+        <input type="text" id="searchRules" class="search-input" placeholder="Search rules...">
       </div>
       
       <!-- Add Rule Form (Collapsible) -->
@@ -52,6 +68,13 @@
             <div class="form-group flex-1">
               <label for="ruleName">Rule Name</label>
               <input type="text" id="ruleName" placeholder="e.g., PCF Control Debug" required>
+            </div>
+            <div class="form-group">
+              <label for="ruleType">Type</label>
+              <select id="ruleType" class="select-small">
+                <option value="redirect">Redirect</option>
+                <option value="block">Block</option>
+              </select>
             </div>
           </div>
           
@@ -66,9 +89,10 @@
             </div>
           </div>
           
-          <div class="form-group">
+          <div class="form-group" id="targetUrlGroup">
             <label for="targetUrl">Target URL (Redirect To)</label>
-            <input type="text" id="targetUrl" placeholder="e.g., http://localhost:8181/bundle.js" required>
+            <input type="text" id="targetUrl" placeholder="e.g., http://localhost:8181/bundle.js">
+            <small class="capture-hint">Use $1, $2, etc. for regex capture groups</small>
           </div>
           
           <div class="form-group">
@@ -85,11 +109,19 @@
                 <label><input type="checkbox" name="resourceType" value="xmlhttprequest" checked> XHR</label>
                 <label><input type="checkbox" name="resourceType" value="stylesheet"> CSS</label>
                 <label><input type="checkbox" name="resourceType" value="image"> Images</label>
+                <label><input type="checkbox" name="resourceType" value="font"> Fonts</label>
+                <label><input type="checkbox" name="resourceType" value="media"> Media</label>
               </div>
             </div>
-            <div class="form-group">
-              <label for="priority">Priority</label>
-              <input type="number" id="priority" value="1" min="1" max="100" class="input-small">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="priority">Priority</label>
+                <input type="number" id="priority" value="1" min="1" max="100" class="input-small">
+              </div>
+              <div class="form-group" id="delayGroup">
+                <label for="delay">Delay (ms)</label>
+                <input type="number" id="delay" value="0" min="0" max="10000" class="input-small">
+              </div>
             </div>
           </details>
           
@@ -102,21 +134,38 @@
       
       <!-- Rules List -->
       <div id="rules-list" class="rules-list">
-        <p class="empty-state">No redirect rules configured. Click "Add New Rule" to get started.</p>
+        <p class="empty-state">No rules configured. Click "Add New Rule" to get started.</p>
       </div>
     </section>
 
     <!-- Logs Tab -->
     <section id="logs-tab" class="tab-content">
       <div class="logs-header">
-        <h3>Redirect Logs</h3>
-        <button id="clearLogsBtn" class="btn btn-secondary btn-small">Clear Logs</button>
+        <h3>Activity Logs</h3>
+        <div class="logs-actions">
+          <button id="resetStatsBtn" class="btn btn-secondary btn-small">Reset Stats</button>
+          <button id="clearLogsBtn" class="btn btn-secondary btn-small">Clear Logs</button>
+        </div>
+      </div>
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-value" id="totalRedirects">0</span>
+          <span class="stat-label">Redirects</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="totalBlocks">0</span>
+          <span class="stat-label">Blocks</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="activeRulesCount">0</span>
+          <span class="stat-label">Active Rules</span>
+        </div>
       </div>
       <div class="logs-info">
-        <small>Shows URLs that have been redirected by your rules. Logs are cleared when the extension reloads.</small>
+        <small>Shows URLs that have been redirected/blocked by your rules. Logs clear when extension reloads.</small>
       </div>
       <div id="logs-list" class="logs-list">
-        <p class="empty-state">No redirects logged yet. Redirects will appear here when URLs match your rules.</p>
+        <p class="empty-state">No activity logged yet. Activity will appear here when URLs match your rules.</p>
       </div>
     </section>
 
@@ -128,10 +177,10 @@
           <span class="logo-icon">⇄</span>
           <div class="logo-text">
             <h2>HotSwap</h2>
-            <span class="version-badge">v1.0.0</span>
+            <span class="version-badge">v1.1.0</span>
           </div>
         </div>
-        <p class="help-tagline">URL Redirect Extension for Development</p>
+        <p class="help-tagline">URL Redirect, Block & Mock Extension for Development</p>
         <div class="help-meta">
           <p><strong>Created by:</strong> Krunal Patel</p>
           <p><strong>License:</strong> MIT License</p>
@@ -145,12 +194,12 @@
       <div class="help-section">
         <h3>Quick Start</h3>
         <ol class="help-steps">
-          <li>Go to <strong>Add Rule</strong> tab</li>
+          <li>Click <strong>"+ Add New Rule"</strong></li>
           <li>Enter a <strong>Rule Name</strong> (e.g., "My PCF Debug")</li>
+          <li>Select <strong>Type</strong>: Redirect or Block</li>
           <li>Enter <strong>Source URL Pattern</strong> (e.g., <code>*bundle*.js</code>)</li>
-          <li>Enter <strong>Target URL</strong> (e.g., <code>https://localhost:8181/bundle.js</code>)</li>
-          <li>Click <strong>Add Rule</strong></li>
-          <li>Refresh your page!</li>
+          <li>Enter <strong>Target URL</strong> for redirects</li>
+          <li>Click <strong>Add Rule</strong> and refresh your page!</li>
         </ol>
       </div>
 
@@ -173,16 +222,16 @@
           </div>
         </div>
 
-        <h4>Regex Patterns (Regex ON)</h4>
-        <p class="help-description">Use full JavaScript regex syntax for complex matching.</p>
+        <h4>Regex Patterns with Capture Groups</h4>
+        <p class="help-description">Use full regex syntax. Reference captured groups in target URL with $1, $2, etc.</p>
         <div class="help-examples">
           <div class="example">
-            <code>.*bundle\.[A-Z0-9]+\.js$</code>
-            <span>Matches bundle.HASH.js files</span>
+            <code>.*/(bundle\.[A-Z0-9]+\.js)$</code>
+            <span>Source: Captures filename in $1</span>
           </div>
           <div class="example">
-            <code>.*\.dynamics\.com/.*\.js</code>
-            <span>Matches JS from dynamics.com subdomains</span>
+            <code>http://localhost:8181/$1</code>
+            <span>Target: Uses captured filename</span>
           </div>
         </div>
 
@@ -198,9 +247,14 @@
       <div class="help-section">
         <h3>Features</h3>
         <ul class="help-features">
-          <li><strong>Strip CSP Headers:</strong> Automatically removes Content-Security-Policy headers so localhost redirects work</li>
-          <li><strong>Domain Filtering:</strong> Limit rules to specific domains (e.g., only on crm.dynamics.com)</li>
-          <li><strong>Logs:</strong> View all redirected URLs in real-time</li>
+          <li><strong>Redirect:</strong> Replace production URLs with localhost for debugging</li>
+          <li><strong>Block:</strong> Block unwanted requests (analytics, ads, etc.)</li>
+          <li><strong>Capture Groups:</strong> Use $1, $2 in redirect URLs for dynamic rewriting</li>
+          <li><strong>Profiles:</strong> Switch between different rule sets quickly</li>
+          <li><strong>Context Menu:</strong> Right-click any link to add a rule</li>
+          <li><strong>Keyboard Shortcut:</strong> Ctrl+Shift+H (Cmd+Shift+H on Mac) to toggle</li>
+          <li><strong>Strip CSP Headers:</strong> Automatically removes CSP so localhost works</li>
+          <li><strong>Dark Mode:</strong> Toggle with the moon icon</li>
           <li><strong>Import/Export:</strong> Share configurations as JSON</li>
         </ul>
       </div>
@@ -220,8 +274,8 @@
             <p>Make sure "Strip CSP Headers" is ON. Add the domain to "Limit to Domains" field.</p>
           </div>
           <div class="faq-item">
-            <strong>No logs showing?</strong>
-            <p>Use Settings → "Test Pattern" to verify your pattern matches the URL.</p>
+            <strong>Capture groups not working?</strong>
+            <p>Make sure "Use Regex Pattern" is checked and parentheses surround what you want to capture.</p>
           </div>
         </div>
       </div>
@@ -286,9 +340,18 @@
         <form id="edit-rule-form" class="rule-form">
           <input type="hidden" id="editIndex">
           
-          <div class="form-group">
-            <label for="editRuleName">Rule Name</label>
-            <input type="text" id="editRuleName" required>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="editRuleName">Rule Name</label>
+              <input type="text" id="editRuleName" required>
+            </div>
+            <div class="form-group">
+              <label for="editRuleType">Type</label>
+              <select id="editRuleType" class="select-small">
+                <option value="redirect">Redirect</option>
+                <option value="block">Block</option>
+              </select>
+            </div>
           </div>
           
           <div class="form-group">
@@ -301,9 +364,10 @@
             </div>
           </div>
           
-          <div class="form-group">
+          <div class="form-group" id="editTargetUrlGroup">
             <label for="editTargetUrl">Target URL</label>
-            <input type="text" id="editTargetUrl" required>
+            <input type="text" id="editTargetUrl">
+            <small class="capture-hint">Use $1, $2, etc. for regex capture groups</small>
           </div>
           
           <div class="form-group">
@@ -319,6 +383,23 @@
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">Save Changes</button>
             <button type="button" class="btn btn-secondary" id="cancelEdit">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal">
+      <div class="modal-content modal-small">
+        <h2 id="profileModalTitle">New Profile</h2>
+        <form id="profile-form">
+          <div class="form-group">
+            <label for="profileName">Profile Name</label>
+            <input type="text" id="profileName" required placeholder="e.g., Production Debug">
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create</button>
+            <button type="button" class="btn btn-secondary" id="cancelProfile">Cancel</button>
           </div>
         </form>
       </div>

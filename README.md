@@ -1,26 +1,41 @@
 # HotSwap - Chrome Extension for Development
 
 **Author:** Krunal Patel  
-**Version:** 1.0.0  
+**Version:** 2.0.0  
 **License:** MIT  
 **GitHub:** https://github.com/krunal039/HotSwap
 
-A Chrome extension that redirects URLs from production to localhost for development debugging. Perfect for PCF controls, Dynamic CRM, Power Apps, and other scenarios where you need to test local code against production environments.
+A powerful Chrome extension that redirects, blocks, and manages URLs for development debugging. Perfect for PCF controls, Dynamic CRM, Power Apps, and other scenarios where you need to test local code against production environments.
 
 ---
 
 ## Features
 
+### Core Features
 - **URL Redirection** - Redirect any URL pattern to a different URL (e.g., production JS to localhost)
+- **URL Blocking** - Block unwanted requests (analytics, ads, third-party scripts)
+- **Capture Groups** - Use regex capture groups ($1, $2) for dynamic URL rewriting
 - **Regex Support** - Use simple wildcards or full regex patterns for flexible matching
-- **Per-Rule Enable/Disable** - Toggle individual rules on/off without deleting them
-- **Global Enable/Disable** - Quickly turn all redirects on/off
-- **Domain Filtering** - Limit rules to specific domains (e.g., only on crm.dynamics.com)
-- **Resource Type Filtering** - Filter by scripts, XHR, stylesheets, images, etc.
-- **CSP Header Stripping** - Automatically removes Content-Security-Policy headers to allow localhost redirects
-- **Redirect Logging** - View all redirected URLs in real-time
+
+### Organization
+- **Profiles** - Create multiple rule sets and switch between them instantly
+- **Search/Filter** - Quickly find rules in large configurations
 - **Import/Export** - Share configurations between browsers or team members
+
+### Developer Experience
+- **Dark Mode** - Easy on the eyes during late-night debugging
+- **Keyboard Shortcut** - Ctrl+Shift+H (Cmd+Shift+H on Mac) to toggle on/off
+- **Context Menu** - Right-click any link to add a rule for that URL
+- **Redirect Counter** - Badge shows live count of redirected/blocked requests
+- **Activity Logs** - View all redirected/blocked URLs in real-time
 - **Debug Tools** - Test patterns and view active Chrome rules
+
+### Technical
+- **CSP Header Stripping** - Automatically removes Content-Security-Policy headers for localhost redirects
+- **Cache-Busting** - Prevents browser caching issues with redirected resources
+- **Per-Rule Enable/Disable** - Toggle individual rules without deleting them
+- **Domain Filtering** - Limit rules to specific domains
+- **Resource Type Filtering** - Filter by scripts, XHR, stylesheets, images, etc.
 
 ---
 
@@ -42,23 +57,21 @@ A Chrome extension that redirects URLs from production to localhost for developm
 ### Adding a Redirect Rule
 
 1. Click the extension icon in your toolbar
-2. Go to the **Add Rule** tab
+2. Click **"+ Add New Rule"**
 3. Fill in:
    - **Rule Name**: A descriptive name (e.g., "PCF Bundle Debug")
+   - **Type**: Redirect or Block
    - **Source URL Pattern**: The URL to intercept
    - **Use Regex Pattern**: Check for regex, uncheck for simple wildcards
-   - **Target URL**: Where to redirect (usually localhost)
+   - **Target URL**: Where to redirect (for Redirect rules)
    - **Limit to Domains** (optional): Only apply on specific domains
-   - **Resource Types**: What types of requests to intercept
-   - **Priority**: Higher numbers = higher priority
-
 4. Click **Add Rule**
 
 ### Pattern Examples
 
 #### Simple Patterns (Regex unchecked)
 ```
-*bundle*.js                    → Matches any URL containing "bundle" and ending in ".js"
+*bundle*.js                    → Matches any URL containing "bundle" ending in ".js"
 *://cdn.example.com/*.js       → Matches any JS file from cdn.example.com
 *dynamics.com*bundle.js        → Matches bundle.js from any dynamics.com subdomain
 ```
@@ -70,39 +83,89 @@ A Chrome extension that redirects URLs from production to localhost for developm
 https://.*\.powerapps\.com/.*  → Matches any powerapps.com URL
 ```
 
+#### Capture Groups (Regex + dynamic replacement)
+```
+Source: .*/resource/(.*\.js)$
+Target: http://localhost:8181/$1
+Result: Preserves the filename while changing the host
+```
+
 ### PCF Control Development Example
 
 ```
 Name: PCF Bundle Debug
+Type: Redirect
 Source URL: *bundle*.js
 Use Regex: ☐ (unchecked)
 Target URL: https://localhost:8181/bundle.js
 Domains: crm.dynamics.com
 ```
 
+### Blocking Analytics Example
+
+```
+Name: Block Analytics
+Type: Block
+Source URL: *google-analytics.com*
+Use Regex: ☐ (unchecked)
+```
+
+---
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+Shift+H` (Windows/Linux) | Toggle HotSwap on/off |
+| `Cmd+Shift+H` (Mac) | Toggle HotSwap on/off |
+
+---
+
+## Profiles
+
+Profiles let you maintain different rule sets for different projects or environments.
+
+1. Click the profile dropdown in the header
+2. Click the menu button (⋮)
+3. Choose:
+   - **New Profile** - Create an empty profile
+   - **Duplicate Profile** - Copy current profile with all rules
+   - **Delete Profile** - Remove current profile (can't delete Default)
+
+Switch between profiles instantly using the dropdown.
+
 ---
 
 ## Features In Detail
 
+### Dark Mode
+
+Click the moon icon (🌙) in the header to toggle dark mode. Your preference is saved.
+
 ### CSP Header Stripping
 
-When redirecting to localhost, browsers often block the request due to Content-Security-Policy headers. This extension automatically strips CSP headers from configured domains, allowing localhost connections.
+When redirecting to localhost, browsers often block the request due to Content-Security-Policy headers. This extension automatically strips CSP headers from configured domains.
 
-Toggle this feature with the **"Strip CSP Headers"** checkbox in the header.
+Toggle with the **"Strip CSP Headers"** checkbox.
 
-### Redirect Logging
+### Redirect Counter Badge
 
-View all redirected URLs in the **Logs** tab:
-- Original URL (crossed out)
-- Target URL (redirected to)
+The extension badge shows the count of redirected/blocked requests in the current session. This helps verify your rules are working.
+
+### Activity Logs
+
+View all activity in the **Logs** tab:
+- Original URL
+- Redirected URL (for redirects)
 - Rule name that matched
-- Timestamp
+- Request type
+- Action (REDIRECT or BLOCK)
 
 ### Debug Tools
 
-In the **Import/Export** tab, find debug tools:
+In the **Settings** tab:
 - **View Active Chrome Rules** - See what rules are actually registered
-- **Test Pattern** - Test if your pattern matches a URL
+- **Test Pattern** - Test if your pattern matches a URL before adding a rule
 
 ---
 
@@ -113,7 +176,7 @@ In the **Import/Export** tab, find debug tools:
 1. Check the extension badge shows a number (active rules count)
 2. Verify global toggle is ON
 3. Verify individual rule is enabled
-4. Go to Import/Export → Click "View Active Chrome Rules"
+4. Go to Settings → Click "View Active Chrome Rules"
    - If empty, your pattern syntax is invalid
 5. Use "Test Pattern" to verify your pattern matches the URL
 
@@ -123,6 +186,7 @@ If using regex (checkbox checked), remember:
 - `*` means "zero or more of previous character" - use `.*` for "match anything"
 - Escape dots with `\.`
 - `^` means start, `$` means end
+- Use parentheses `()` to create capture groups
 
 **Wrong:** `*bundle*.js` (with regex checked)  
 **Right:** `.*bundle.*\.js` (with regex checked)  
@@ -135,18 +199,40 @@ If you see "violates Content Security Policy":
 2. Add the page's domain to your rule's "Limit to Domains" field
 3. Hard refresh the page (Ctrl+Shift+R)
 
+### Caching Issues
+
+If redirects only work on hard refresh:
+1. Open DevTools (F12)
+2. Go to Network tab
+3. Check "Disable cache"
+4. Or use Ctrl+Shift+R for hard refresh
+
+The extension automatically adds cache-busting headers, but browser cache from before the rule was added may persist.
+
 ---
 
 ## Technical Details
 
 - **Manifest Version:** 3 (latest Chrome extension format)
-- **API:** declarativeNetRequest (efficient, non-blocking redirects)
+- **API:** declarativeNetRequest (efficient, non-blocking)
 - **Storage:** chrome.storage.local
 - **Max Rules:** ~5000 dynamic rules supported
 
 ---
 
 ## Changelog
+
+### v1.1.0
+- **Block URLs** - New rule type to block requests entirely
+- **Capture Groups** - Use $1, $2 in redirect URLs with regex
+- **Profiles** - Create and switch between multiple rule sets
+- **Dark Mode** - Toggle with moon icon
+- **Keyboard Shortcut** - Ctrl+Shift+H to toggle
+- **Context Menu** - Right-click to add rule for any URL
+- **Redirect Counter** - Badge shows live redirect count
+- **Search/Filter** - Find rules quickly
+- **Stats Dashboard** - See redirect/block counts in Logs tab
+- Improved UI/UX
 
 ### v1.0.0
 - Initial release
