@@ -1,42 +1,27 @@
-// HotSwap - Background service worker for URL redirection
+// HotSwap v3.0.0 - Background service worker
 // Author: Krunal Patel
 // GitHub: https://github.com/krunal039/HotSwap
 
 const REDIRECT_RULE_ID_START = 1;
-const CSP_RULE_ID_START = 5000; // Reserve IDs 5000+ for CSP rules
+const BLOCK_RULE_ID_START = 2000;
+const HEADER_RULE_ID_START = 3000;
+const CSP_RULE_ID_START = 5000;
+const CACHE_RULE_ID_START = 6000;
 
 // Initialize extension
 chrome.runtime.onInstalled.addListener(async () => {
-  console.log('HotSwap extension installed');
+  console.log('HotSwap v3.0.0 installed');
   
-  // Initialize storage with default values if not set
-  const data = await chrome.storage.local.get(['rules', 'globalEnabled', 'profiles', 'activeProfile', 'darkMode']);
+  const data = await chrome.storage.local.get(['rules', 'globalEnabled', 'profiles', 'activeProfile', 'darkMode', 'stripCSP']);
   
-  if (data.rules === undefined) {
-    await chrome.storage.local.set({ rules: [] });
-  }
+  if (data.rules === undefined) await chrome.storage.local.set({ rules: [] });
+  if (data.globalEnabled === undefined) await chrome.storage.local.set({ globalEnabled: true });
+  if (data.stripCSP === undefined) await chrome.storage.local.set({ stripCSP: true });
+  if (data.profiles === undefined) await chrome.storage.local.set({ profiles: [{ id: 'default', name: 'Default' }] });
+  if (data.activeProfile === undefined) await chrome.storage.local.set({ activeProfile: 'default' });
+  if (data.darkMode === undefined) await chrome.storage.local.set({ darkMode: false });
   
-  if (data.globalEnabled === undefined) {
-    await chrome.storage.local.set({ globalEnabled: true });
-  }
-  
-  if (data.stripCSP === undefined) {
-    await chrome.storage.local.set({ stripCSP: true });
-  }
-  
-  if (data.profiles === undefined) {
-    await chrome.storage.local.set({ profiles: [{ id: 'default', name: 'Default' }] });
-  }
-  
-  if (data.activeProfile === undefined) {
-    await chrome.storage.local.set({ activeProfile: 'default' });
-  }
-  
-  if (data.darkMode === undefined) {
-    await chrome.storage.local.set({ darkMode: false });
-  }
-  
-  // Create context menu
+  // Context menus
   chrome.contextMenus.create({
     id: 'hotswap-add-rule',
     title: 'Add HotSwap rule for this URL',
@@ -49,30 +34,24 @@ chrome.runtime.onInstalled.addListener(async () => {
     contexts: ['action']
   });
   
-  // Apply existing rules on install
   await applyRules();
 });
 
-// Handle keyboard shortcut
+// Keyboard shortcut
 chrome.commands.onCommand.addListener(async (command) => {
   if (command === 'toggle-hotswap') {
     const { globalEnabled } = await chrome.storage.local.get('globalEnabled');
     await chrome.storage.local.set({ globalEnabled: !globalEnabled });
-    
-    // Show notification
-    const status = !globalEnabled ? 'ON' : 'OFF';
-    console.log(`HotSwap: Toggled ${status} via keyboard shortcut`);
+    console.log(`HotSwap: Toggled ${!globalEnabled ? 'ON' : 'OFF'}`);
   }
 });
 
-// Handle context menu clicks
+// Context menu
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === 'hotswap-add-rule') {
     const url = info.linkUrl || info.srcUrl || info.pageUrl;
     if (url) {
-      // Store the URL to be added
       await chrome.storage.local.set({ pendingRuleUrl: url });
-      // Open popup (user will see the URL pre-filled)
       chrome.action.openPopup();
     }
   } else if (info.menuItemId === 'hotswap-toggle') {
@@ -81,108 +60,80 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 });
 
-// Listen for storage changes to update rules dynamically
+// Storage change listener
 chrome.storage.onChanged.addListener(async (changes, namespace) => {
   if (namespace === 'local' && (changes.rules || changes.globalEnabled || changes.stripCSP || changes.activeProfile || changes.profiles)) {
     await applyRules();
   }
 });
 
-// Get rules for the active profile
+// Get active profile rules
 async function getActiveProfileRules() {
   const { profiles = [], activeProfile = 'default', rules = [] } = 
     await chrome.storage.local.get(['profiles', 'activeProfile', 'rules']);
   
-  // Default profile uses the main 'rules' array
-  if (activeProfile === 'default') {
-    return rules;
-  }
-  
-  // Other profiles have rules stored inside the profile object
+  if (activeProfile === 'default') return rules;
   const profile = profiles.find(p => p.id === activeProfile);
   return profile?.rules || [];
 }
 
-// Save rules for the active profile
+// Save active profile rules
 async function saveActiveProfileRules(newRules) {
   const { profiles = [], activeProfile = 'default' } = 
     await chrome.storage.local.get(['profiles', 'activeProfile']);
   
   if (activeProfile === 'default') {
-    // Default profile uses main 'rules' array
     await chrome.storage.local.set({ rules: newRules });
   } else {
-    // Other profiles store rules inside profile object
-    const updatedProfiles = profiles.map(p => {
-      if (p.id === activeProfile) {
-        return { ...p, rules: newRules };
-      }
-      return p;
-    });
+    const updatedProfiles = profiles.map(p => 
+      p.id === activeProfile ? { ...p, rules: newRules } : p
+    );
     await chrome.storage.local.set({ profiles: updatedProfiles });
   }
 }
 
-// Apply redirect rules based on stored configuration
+// Apply rules
 async function applyRules() {
   try {
     const { globalEnabled = true, stripCSP = true } = await chrome.storage.local.get(['globalEnabled', 'stripCSP']);
     const rules = await getActiveProfileRules();
     
-    // Get existing dynamic rules
+    // Remove existing rules
     const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
-    const existingRuleIds = existingRules.map(rule => rule.id);
-    
-    // Remove all existing dynamic rules
-    if (existingRuleIds.length > 0) {
+    if (existingRules.length > 0) {
       await chrome.declarativeNetRequest.updateDynamicRules({
-        removeRuleIds: existingRuleIds
+        removeRuleIds: existingRules.map(r => r.id)
       });
     }
     
-    // If globally disabled, don't add any rules
     if (!globalEnabled) {
-      console.log('URL Override: Global redirect disabled');
       updateBadge(false, 0);
       return;
     }
     
-    // Build new rules from enabled configurations
     const newRules = [];
-    let ruleId = REDIRECT_RULE_ID_START;
+    let redirectId = REDIRECT_RULE_ID_START;
+    let blockId = BLOCK_RULE_ID_START;
+    let headerId = HEADER_RULE_ID_START;
     const domainsNeedingCSPStrip = new Set();
     
+    // Process redirect rules
     for (const rule of rules) {
-      if (!rule.enabled || !rule.sourceUrl || !rule.targetUrl) {
-        continue;
-      }
+      if (!rule.enabled || !rule.sourceUrl) continue;
+      if (rule.ruleType === 'block' || rule.ruleType === 'modifyHeaders') continue;
+      if (!rule.targetUrl) continue;
       
       try {
-        // Skip if this is a block or mock rule (handled separately)
-        if (rule.ruleType === 'block' || rule.ruleType === 'mock') {
-          continue;
-        }
-        
-        // Create redirect rule
+        const hasCaptureGroups = /\$\d+/.test(rule.targetUrl);
         const redirectRule = {
-          id: ruleId++,
+          id: redirectId++,
           priority: rule.priority || 1,
-          action: {
-            type: 'redirect',
-            redirect: {}
-          },
-          condition: {
-            resourceTypes: getResourceTypes(rule.resourceTypes)
-          }
+          action: { type: 'redirect', redirect: {} },
+          condition: { resourceTypes: getResourceTypes(rule.resourceTypes) }
         };
         
-        // Check if target URL has capture group placeholders ($1, $2, etc.)
-        const hasCaptureGroups = /\$\d+/.test(rule.targetUrl);
-        
-        // Use regexFilter for regex patterns, urlFilter for simple patterns
         if (rule.useRegex) {
           redirectRule.condition.regexFilter = rule.sourceUrl;
-          // Use regexSubstitution for capture groups
           if (hasCaptureGroups) {
             redirectRule.action.redirect.regexSubstitution = rule.targetUrl;
           } else {
@@ -193,35 +144,26 @@ async function applyRules() {
           redirectRule.action.redirect.url = rule.targetUrl;
         }
         
-        // Add domain filter if specified
-        if (rule.domains && rule.domains.length > 0) {
+        if (rule.domains?.length) {
           redirectRule.condition.initiatorDomains = rule.domains;
-          // Track domains that need CSP stripping
           rule.domains.forEach(d => domainsNeedingCSPStrip.add(d));
-        }
-        
-        // Check if redirecting to localhost - will need CSP stripping
-        if (rule.targetUrl.includes('localhost') || rule.targetUrl.includes('127.0.0.1')) {
-          rule.needsCSPStrip = true;
         }
         
         newRules.push(redirectRule);
       } catch (err) {
-        console.error(`Error creating rule for ${rule.sourceUrl}:`, err);
+        console.error(`Error creating redirect rule: ${rule.sourceUrl}`, err);
       }
     }
     
     // Process block rules
     for (const rule of rules) {
-      if (!rule.enabled || rule.ruleType !== 'block') continue;
+      if (!rule.enabled || rule.ruleType !== 'block' || !rule.sourceUrl) continue;
       
       const blockRule = {
-        id: ruleId++,
+        id: blockId++,
         priority: rule.priority || 1,
         action: { type: 'block' },
-        condition: {
-          resourceTypes: getResourceTypes(rule.resourceTypes)
-        }
+        condition: { resourceTypes: getResourceTypes(rule.resourceTypes) }
       };
       
       if (rule.useRegex) {
@@ -230,48 +172,92 @@ async function applyRules() {
         blockRule.condition.urlFilter = rule.sourceUrl;
       }
       
-      if (rule.domains && rule.domains.length > 0) {
+      if (rule.domains?.length) {
         blockRule.condition.initiatorDomains = rule.domains;
       }
       
       newRules.push(blockRule);
     }
     
-    // Add CSP stripping rules if enabled and we have redirect rules
+    // Process header modification rules
+    for (const rule of rules) {
+      if (!rule.enabled || rule.ruleType !== 'modifyHeaders' || !rule.sourceUrl) continue;
+      if (!rule.headers || rule.headers.length === 0) continue;
+      
+      const requestHeaders = [];
+      const responseHeaders = [];
+      
+      for (const h of rule.headers) {
+        const headerMod = {
+          header: h.name,
+          operation: h.operation
+        };
+        if (h.operation !== 'remove' && h.value) {
+          headerMod.value = h.value;
+        }
+        
+        if (h.type === 'request') {
+          requestHeaders.push(headerMod);
+        } else {
+          responseHeaders.push(headerMod);
+        }
+      }
+      
+      const headerRule = {
+        id: headerId++,
+        priority: rule.priority || 1,
+        action: { type: 'modifyHeaders' },
+        condition: { resourceTypes: getResourceTypes(rule.resourceTypes) }
+      };
+      
+      if (requestHeaders.length) headerRule.action.requestHeaders = requestHeaders;
+      if (responseHeaders.length) headerRule.action.responseHeaders = responseHeaders;
+      
+      if (rule.useRegex) {
+        headerRule.condition.regexFilter = rule.sourceUrl;
+      } else {
+        headerRule.condition.urlFilter = rule.sourceUrl;
+      }
+      
+      if (rule.domains?.length) {
+        headerRule.condition.initiatorDomains = rule.domains;
+      }
+      
+      newRules.push(headerRule);
+    }
+    
+    // CSP stripping rules
     if (stripCSP && newRules.length > 0) {
       const cspRules = createCSPStrippingRules(domainsNeedingCSPStrip);
       newRules.push(...cspRules);
-      console.log(`HotSwap: Adding ${cspRules.length} CSP stripping rules`);
     }
     
-    // Add cache-busting rules for each redirect pattern (dynamic, any domain)
-    const cacheBustStartId = CSP_RULE_ID_START + 1000;
-    const cacheBustRules = createCacheBustingRules(rules, cacheBustStartId);
+    // Cache-busting rules
+    const cacheBustRules = createCacheBustingRules(rules, CACHE_RULE_ID_START);
     newRules.push(...cacheBustRules);
-    console.log(`HotSwap: Adding ${cacheBustRules.length} cache-busting rules`);
     
-    // Add new rules
+    // Apply rules
     if (newRules.length > 0) {
-      await chrome.declarativeNetRequest.updateDynamicRules({
-        addRules: newRules
-      });
+      await chrome.declarativeNetRequest.updateDynamicRules({ addRules: newRules });
     }
     
     const redirectCount = newRules.filter(r => r.action.type === 'redirect').length;
-    console.log(`URL Override: Applied ${redirectCount} redirect rules`);
-    updateBadge(true, redirectCount);
+    const blockCount = newRules.filter(r => r.action.type === 'block').length;
+    const headerCount = newRules.filter(r => r.action.type === 'modifyHeaders').length;
+    
+    console.log(`HotSwap: Applied ${redirectCount} redirects, ${blockCount} blocks, ${headerCount} header rules`);
+    updateBadge(true, redirectCount + blockCount);
     
   } catch (error) {
     console.error('Error applying rules:', error);
   }
 }
 
-// Create rules to strip CSP headers that block localhost
+// CSP stripping rules
 function createCSPStrippingRules(domains) {
   const rules = [];
   let ruleId = CSP_RULE_ID_START;
   
-  // Headers to remove that enforce CSP
   const cspHeaders = [
     'content-security-policy',
     'content-security-policy-report-only',
@@ -279,28 +265,15 @@ function createCSPStrippingRules(domains) {
     'x-webkit-csp'
   ];
   
-  // Headers to remove that cause caching
-  const cacheHeaders = [
-    'cache-control',
-    'expires',
-    'etag',
-    'last-modified'
-  ];
-  
-  // If specific domains are configured, create rules for each
   if (domains.size > 0) {
-    const domainList = Array.from(domains);
+    const domainList = [...domains];
     
-    // Create one rule to strip CSP headers for all configured domains
     rules.push({
       id: ruleId++,
       priority: 1,
       action: {
         type: 'modifyHeaders',
-        responseHeaders: cspHeaders.map(header => ({
-          header: header,
-          operation: 'remove'
-        }))
+        responseHeaders: cspHeaders.map(h => ({ header: h, operation: 'remove' }))
       },
       condition: {
         urlFilter: '*',
@@ -309,16 +282,12 @@ function createCSPStrippingRules(domains) {
       }
     });
     
-    // Also strip from responses TO these domains
     rules.push({
       id: ruleId++,
       priority: 1,
       action: {
         type: 'modifyHeaders',
-        responseHeaders: cspHeaders.map(header => ({
-          header: header,
-          operation: 'remove'
-        }))
+        responseHeaders: cspHeaders.map(h => ({ header: h, operation: 'remove' }))
       },
       condition: {
         urlFilter: '*',
@@ -326,28 +295,15 @@ function createCSPStrippingRules(domains) {
         requestDomains: domainList
       }
     });
-    
   } else {
-    // No specific domains - create a broader rule for common dev scenarios
-    // This targets dynamics/powerapps domains commonly used with PCF
-    const defaultDomains = [
-      'dynamics.com',
-      'crm.dynamics.com', 
-      'powerapps.com',
-      'make.powerapps.com',
-      'apps.powerapps.com',
-      'content.powerapps.com'
-    ];
+    const defaultDomains = ['dynamics.com', 'crm.dynamics.com', 'powerapps.com', 'make.powerapps.com', 'apps.powerapps.com', 'content.powerapps.com'];
     
     rules.push({
       id: ruleId++,
       priority: 1,
       action: {
         type: 'modifyHeaders',
-        responseHeaders: cspHeaders.map(header => ({
-          header: header,
-          operation: 'remove'
-        }))
+        responseHeaders: cspHeaders.map(h => ({ header: h, operation: 'remove' }))
       },
       condition: {
         urlFilter: '*',
@@ -355,44 +311,31 @@ function createCSPStrippingRules(domains) {
         requestDomains: defaultDomains
       }
     });
-    
   }
   
   return rules;
 }
 
-// Create cache-busting rules for each redirect rule's source pattern
+// Cache-busting rules
 function createCacheBustingRules(rules, startId) {
   const cacheBustingRules = [];
   let ruleId = startId;
   
-  const responseCacheHeaders = [
-    'cache-control',
-    'expires', 
-    'etag',
-    'last-modified'
-  ];
+  const responseCacheHeaders = ['cache-control', 'expires', 'etag', 'last-modified'];
   
   for (const rule of rules) {
-    if (!rule.enabled || !rule.sourceUrl) continue;
+    if (!rule.enabled || !rule.sourceUrl || rule.ruleType === 'block') continue;
     
-    // Rule to strip cache headers from RESPONSE (prevents future caching)
     const responseRule = {
       id: ruleId++,
       priority: 1,
       action: {
         type: 'modifyHeaders',
-        responseHeaders: responseCacheHeaders.map(header => ({
-          header: header,
-          operation: 'remove'
-        }))
+        responseHeaders: responseCacheHeaders.map(h => ({ header: h, operation: 'remove' }))
       },
-      condition: {
-        resourceTypes: ['script', 'stylesheet', 'xmlhttprequest']
-      }
+      condition: { resourceTypes: ['script', 'stylesheet', 'xmlhttprequest'] }
     };
     
-    // Rule to add no-cache to REQUEST (forces revalidation of cached content)
     const requestRule = {
       id: ruleId++,
       priority: 1,
@@ -403,12 +346,9 @@ function createCacheBustingRules(rules, startId) {
           { header: 'Pragma', operation: 'set', value: 'no-cache' }
         ]
       },
-      condition: {
-        resourceTypes: ['script', 'stylesheet', 'xmlhttprequest']
-      }
+      condition: { resourceTypes: ['script', 'stylesheet', 'xmlhttprequest'] }
     };
     
-    // Use same pattern type as the redirect rule
     if (rule.useRegex) {
       responseRule.condition.regexFilter = rule.sourceUrl;
       requestRule.condition.regexFilter = rule.sourceUrl;
@@ -417,29 +357,23 @@ function createCacheBustingRules(rules, startId) {
       requestRule.condition.urlFilter = rule.sourceUrl;
     }
     
-    cacheBustingRules.push(responseRule);
-    cacheBustingRules.push(requestRule);
+    cacheBustingRules.push(responseRule, requestRule);
   }
   
   return cacheBustingRules;
 }
 
-// Get resource types array
+// Get resource types
 function getResourceTypes(types) {
   const defaultTypes = ['script', 'xmlhttprequest', 'stylesheet', 'image', 'font', 'media', 'other'];
-  
-  if (!types || types.length === 0) {
-    return defaultTypes;
-  }
-  
-  return types;
+  return types?.length ? types : defaultTypes;
 }
 
-// Update extension badge
+// Update badge
 function updateBadge(enabled, count) {
   if (!enabled) {
     chrome.action.setBadgeText({ text: 'OFF' });
-    chrome.action.setBadgeBackgroundColor({ color: '#999999' });
+    chrome.action.setBadgeBackgroundColor({ color: '#999' });
   } else if (count > 0) {
     chrome.action.setBadgeText({ text: count.toString() });
     chrome.action.setBadgeBackgroundColor({ color: '#4CAF50' });
@@ -448,18 +382,17 @@ function updateBadge(enabled, count) {
   }
 }
 
-// Store for redirect logs (in-memory, cleared on service worker restart)
+// Logs storage
 let redirectLogs = [];
 const MAX_LOGS = 100;
 let sessionRedirectCount = 0;
 let sessionBlockCount = 0;
-let ruleMatchCounts = {}; // Track per-rule match counts
+let sessionHeaderCount = 0;
+let ruleMatchCounts = {};
 
-// Listen for rule matches (redirects and blocks)
+// Listen for rule matches
 chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {
-  // Only log redirect/block rules, not CSP stripping rules
   if (info.rule.ruleId < CSP_RULE_ID_START) {
-    // Track per-rule counts
     const ruleId = info.rule.ruleId;
     ruleMatchCounts[ruleId] = (ruleMatchCounts[ruleId] || 0) + 1;
     
@@ -474,222 +407,148 @@ chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {
       method: info.request.method || 'GET'
     };
     
-    // Get the rule to find the target URL and type
     getActiveProfileRules().then((rules) => {
-      const ruleIndex = info.rule.ruleId - REDIRECT_RULE_ID_START;
+      // Determine rule type based on ID range
+      let ruleType = 'redirect';
+      let ruleIndex = -1;
+      
+      if (info.rule.ruleId >= HEADER_RULE_ID_START && info.rule.ruleId < CSP_RULE_ID_START) {
+        ruleType = 'modifyHeaders';
+        ruleIndex = rules.findIndex(r => r.ruleType === 'modifyHeaders' && r.enabled);
+      } else if (info.rule.ruleId >= BLOCK_RULE_ID_START && info.rule.ruleId < HEADER_RULE_ID_START) {
+        ruleType = 'block';
+        ruleIndex = rules.findIndex(r => r.ruleType === 'block' && r.enabled);
+      } else {
+        ruleIndex = info.rule.ruleId - REDIRECT_RULE_ID_START;
+      }
+      
       if (rules[ruleIndex]) {
         logEntry.targetUrl = rules[ruleIndex].targetUrl;
         logEntry.ruleName = rules[ruleIndex].name;
         logEntry.ruleType = rules[ruleIndex].ruleType || 'redirect';
-      }
-      
-      // Update counts based on rule type
-      if (logEntry.ruleType === 'block') {
-        sessionBlockCount++;
       } else {
-        sessionRedirectCount++;
+        logEntry.ruleType = ruleType;
       }
       
-      // Update badge with total count
-      const totalCount = sessionRedirectCount + sessionBlockCount;
+      // Update counts
+      if (logEntry.ruleType === 'block') sessionBlockCount++;
+      else if (logEntry.ruleType === 'modifyHeaders') sessionHeaderCount++;
+      else sessionRedirectCount++;
+      
+      const totalCount = sessionRedirectCount + sessionBlockCount + sessionHeaderCount;
       chrome.action.setBadgeText({ text: totalCount.toString() });
-      chrome.action.setBadgeBackgroundColor({ color: logEntry.ruleType === 'block' ? '#EF4444' : '#10B981' });
+      chrome.action.setBadgeBackgroundColor({ 
+        color: logEntry.ruleType === 'block' ? '#EF4444' : logEntry.ruleType === 'modifyHeaders' ? '#3B82F6' : '#10B981'
+      });
       
       redirectLogs.unshift(logEntry);
+      if (redirectLogs.length > MAX_LOGS) redirectLogs = redirectLogs.slice(0, MAX_LOGS);
       
-      // Trim logs to max size
-      if (redirectLogs.length > MAX_LOGS) {
-        redirectLogs = redirectLogs.slice(0, MAX_LOGS);
-      }
-      
-      console.log('HotSwap:', logEntry.ruleType || 'redirect', info.request.url, logEntry.ruleType === 'block' ? '[BLOCKED]' : '→ ' + logEntry.targetUrl);
+      console.log('HotSwap:', logEntry.ruleType, info.request.url);
     });
   }
 });
 
-// Listen for messages from popup
+// Message handler
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'refreshRules') {
-    applyRules().then(() => {
-      sendResponse({ success: true });
-    }).catch(err => {
-      sendResponse({ success: false, error: err.message });
-    });
-    return true; // Keep channel open for async response
-  }
-  
-  if (message.action === 'getRuleCount') {
-    chrome.declarativeNetRequest.getDynamicRules().then(rules => {
-      sendResponse({ count: rules.length });
-    });
-    return true;
-  }
-  
-  if (message.action === 'getLogs') {
-    sendResponse({ logs: redirectLogs });
-    return true;
-  }
-  
-  if (message.action === 'clearLogs') {
-    redirectLogs = [];
-    sendResponse({ success: true });
-    return true;
-  }
-  
-  if (message.action === 'getActiveRules') {
-    chrome.declarativeNetRequest.getDynamicRules().then(rules => {
-      sendResponse({ rules: rules });
-    });
-    return true;
-  }
-  
-  if (message.action === 'testPattern') {
-    const { pattern, useRegex, testUrl } = message;
-    try {
-      let matches = false;
-      if (useRegex) {
-        const regex = new RegExp(pattern);
-        matches = regex.test(testUrl);
-      } else {
-        // Simple urlFilter matching simulation
-        const regexPattern = pattern
-          .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
-          .replace(/\*/g, '.*');
-        const regex = new RegExp(regexPattern, 'i');
-        matches = regex.test(testUrl);
-      }
-      sendResponse({ matches, error: null });
-    } catch (err) {
-      sendResponse({ matches: false, error: err.message });
-    }
-    return true;
-  }
-  
-  if (message.action === 'getStats') {
-    sendResponse({
+  const handlers = {
+    refreshRules: () => applyRules().then(() => ({ success: true })).catch(err => ({ success: false, error: err.message })),
+    getRuleCount: () => chrome.declarativeNetRequest.getDynamicRules().then(rules => ({ count: rules.length })),
+    getLogs: () => ({ logs: redirectLogs }),
+    clearLogs: () => { redirectLogs = []; return { success: true }; },
+    getActiveRules: () => chrome.declarativeNetRequest.getDynamicRules().then(rules => ({ rules })),
+    getStats: () => ({
       redirectCount: sessionRedirectCount,
       blockCount: sessionBlockCount,
-      ruleMatchCounts: ruleMatchCounts,
+      headerCount: sessionHeaderCount,
+      ruleMatchCounts,
       logCount: redirectLogs.length
-    });
-    return true;
-  }
-  
-  if (message.action === 'resetStats') {
-    sessionRedirectCount = 0;
-    sessionBlockCount = 0;
-    ruleMatchCounts = {};
-    redirectLogs = [];
-    chrome.action.setBadgeText({ text: '' });
-    sendResponse({ success: true });
-    return true;
-  }
-  
-  if (message.action === 'getPendingUrl') {
-    chrome.storage.local.get('pendingRuleUrl').then(({ pendingRuleUrl }) => {
-      // Clear it after reading
-      chrome.storage.local.remove('pendingRuleUrl');
-      sendResponse({ url: pendingRuleUrl });
-    });
-    return true;
-  }
-  
-  // Profile management
-  if (message.action === 'switchProfile') {
-    const { profileId } = message;
-    chrome.storage.local.set({ activeProfile: profileId }).then(() => {
-      applyRules().then(() => {
-        sendResponse({ success: true });
-      });
-    });
-    return true;
-  }
-  
-  if (message.action === 'getActiveRulesForProfile') {
-    getActiveProfileRules().then(rules => {
-      sendResponse({ rules });
-    });
-    return true;
-  }
-  
-  if (message.action === 'saveRulesForProfile') {
-    const { rules } = message;
-    saveActiveProfileRules(rules).then(() => {
-      sendResponse({ success: true });
-    });
-    return true;
-  }
-  
-  if (message.action === 'createProfile') {
-    const { name } = message;
-    chrome.storage.local.get(['profiles']).then(({ profiles = [] }) => {
-      const newProfile = {
-        id: `profile-${Date.now()}`,
-        name: name,
-        rules: [] // New profile starts empty
-      };
-      profiles.push(newProfile);
-      chrome.storage.local.set({ profiles }).then(() => {
-        sendResponse({ success: true, profile: newProfile });
-      });
-    });
-    return true;
-  }
-  
-  if (message.action === 'renameProfile') {
-    const { profileId, newName } = message;
-    chrome.storage.local.get(['profiles']).then(({ profiles = [] }) => {
-      const updatedProfiles = profiles.map(p => {
-        if (p.id === profileId) {
-          return { ...p, name: newName };
+    }),
+    resetStats: () => {
+      sessionRedirectCount = 0;
+      sessionBlockCount = 0;
+      sessionHeaderCount = 0;
+      ruleMatchCounts = {};
+      redirectLogs = [];
+      chrome.action.setBadgeText({ text: '' });
+      return { success: true };
+    },
+    getPendingUrl: async () => {
+      const { pendingRuleUrl } = await chrome.storage.local.get('pendingRuleUrl');
+      await chrome.storage.local.remove('pendingRuleUrl');
+      return { url: pendingRuleUrl };
+    },
+    testPattern: () => {
+      const { pattern, useRegex, testUrl } = message;
+      try {
+        let matches = false;
+        if (useRegex) {
+          matches = new RegExp(pattern).test(testUrl);
+        } else {
+          const regexPattern = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+          matches = new RegExp(regexPattern, 'i').test(testUrl);
         }
-        return p;
-      });
-      chrome.storage.local.set({ profiles: updatedProfiles }).then(() => {
-        sendResponse({ success: true });
-      });
-    });
-    return true;
-  }
-  
-  if (message.action === 'deleteProfile') {
-    const { profileId } = message;
-    if (profileId === 'default') {
-      sendResponse({ success: false, error: 'Cannot delete default profile' });
-      return true;
-    }
-    chrome.storage.local.get(['profiles', 'activeProfile']).then(({ profiles = [], activeProfile }) => {
-      profiles = profiles.filter(p => p.id !== profileId);
-      const updates = { profiles };
-      if (activeProfile === profileId) {
-        updates.activeProfile = 'default';
+        return { matches, error: null };
+      } catch (err) {
+        return { matches: false, error: err.message };
       }
-      chrome.storage.local.set(updates).then(() => {
-        applyRules().then(() => {
-          sendResponse({ success: true });
-        });
-      });
-    });
-    return true;
-  }
-  
-  if (message.action === 'duplicateProfile') {
-    const { profileId, newName } = message;
-    chrome.storage.local.get(['profiles', 'rules']).then(({ profiles = [], rules = [] }) => {
-      const sourceProfile = profiles.find(p => p.id === profileId);
-      // For default profile, use current rules; for others, use profile-specific rules
-      const sourceRules = profileId === 'default' ? rules : (sourceProfile?.rules || []);
-      
+    },
+    switchProfile: async () => {
+      await chrome.storage.local.set({ activeProfile: message.profileId });
+      await applyRules();
+      return { success: true };
+    },
+    getActiveRulesForProfile: async () => ({ rules: await getActiveProfileRules() }),
+    saveRulesForProfile: async () => {
+      await saveActiveProfileRules(message.rules);
+      return { success: true };
+    },
+    createProfile: async () => {
+      const { profiles = [] } = await chrome.storage.local.get('profiles');
+      const newProfile = { id: `profile-${Date.now()}`, name: message.name, rules: [] };
+      profiles.push(newProfile);
+      await chrome.storage.local.set({ profiles });
+      return { success: true, profile: newProfile };
+    },
+    renameProfile: async () => {
+      const { profiles = [] } = await chrome.storage.local.get('profiles');
+      const updated = profiles.map(p => p.id === message.profileId ? { ...p, name: message.newName } : p);
+      await chrome.storage.local.set({ profiles: updated });
+      return { success: true };
+    },
+    deleteProfile: async () => {
+      if (message.profileId === 'default') return { success: false, error: 'Cannot delete default' };
+      const { profiles = [], activeProfile } = await chrome.storage.local.get(['profiles', 'activeProfile']);
+      const filtered = profiles.filter(p => p.id !== message.profileId);
+      const updates = { profiles: filtered };
+      if (activeProfile === message.profileId) updates.activeProfile = 'default';
+      await chrome.storage.local.set(updates);
+      await applyRules();
+      return { success: true };
+    },
+    duplicateProfile: async () => {
+      const { profiles = [], rules = [] } = await chrome.storage.local.get(['profiles', 'rules']);
+      const source = profiles.find(p => p.id === message.profileId);
+      const sourceRules = message.profileId === 'default' ? rules : (source?.rules || []);
       const newProfile = {
         id: `profile-${Date.now()}`,
-        name: newName || `${sourceProfile?.name || 'Profile'} (Copy)`,
+        name: message.newName || `${source?.name || 'Profile'} (Copy)`,
         rules: JSON.parse(JSON.stringify(sourceRules))
       };
       profiles.push(newProfile);
-      chrome.storage.local.set({ profiles }).then(() => {
-        sendResponse({ success: true, profile: newProfile });
-      });
-    });
+      await chrome.storage.local.set({ profiles });
+      return { success: true, profile: newProfile };
+    }
+  };
+  
+  const handler = handlers[message.action];
+  if (handler) {
+    const result = handler();
+    if (result instanceof Promise) {
+      result.then(sendResponse);
+      return true;
+    }
+    sendResponse(result);
     return true;
   }
 });

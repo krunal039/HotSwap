@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "HotSwap",
-  "version": "1.1.0",
-  "description": "Redirect, block, and mock URLs for development debugging (PCF, CRM, Power Apps)",
+  "version": "3.0.0",
+  "description": "Advanced URL redirect, block, and header modification for development debugging",
   "author": "Krunal Patel",
   "homepage_url": "https://github.com/krunal039/HotSwap",
   "permissions": [
@@ -11,7 +11,8 @@
     "declarativeNetRequestFeedback",
     "contextMenus",
     "activeTab",
-    "scripting"
+    "scripting",
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"

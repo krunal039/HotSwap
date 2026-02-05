@@ -1,254 +1,206 @@
-# HotSwap - Chrome Extension for Development
+# HotSwap v3.0.0
+
+Advanced URL redirect, block, and header modification Chrome extension for development debugging.
 
 **Author:** Krunal Patel  
-**Version:** 1.1.0  
 **License:** MIT  
-**GitHub:** https://github.com/krunal039/HotSwap
-
-A powerful Chrome extension that redirects, blocks, and manages URLs for development debugging. Perfect for PCF controls, Dynamic CRM, Power Apps, and other scenarios where you need to test local code against production environments.
-
----
+**GitHub:** [https://github.com/krunal039/HotSwap](https://github.com/krunal039/HotSwap)
 
 ## Features
 
-### Core Features
-- **URL Redirection** - Redirect any URL pattern to a different URL (e.g., production JS to localhost)
-- **URL Blocking** - Block unwanted requests (analytics, ads, third-party scripts)
-- **Capture Groups** - Use regex capture groups ($1, $2) for dynamic URL rewriting
-- **Regex Support** - Use simple wildcards or full regex patterns for flexible matching
+### Core Functionality
+- **URL Redirect** - Replace production URLs with localhost for debugging
+- **URL Block** - Block unwanted requests (analytics, ads, etc.)
+- **Header Modification** - Add, remove, or modify request/response headers
+- **Regex Support** - Full regex patterns with capture groups ($1, $2, etc.)
+- **Wildcard Patterns** - Simple `*` wildcards for quick matching
 
 ### Organization
-- **Profiles** - Create multiple rule sets and switch between them instantly
-- **Search/Filter** - Quickly find rules in large configurations
-- **Import/Export** - Share configurations between browsers or team members
+- **Rule Groups** - Organize rules into groups (PCF, API, Blocking, etc.)
+- **Rule Colors** - Color-code rules for visual organization
+- **Profiles** - Switch between different rule sets quickly
+- **Search & Filter** - Find rules by name, pattern, or group
 
 ### Developer Experience
-- **Dark Mode** - Easy on the eyes during late-night debugging
-- **Keyboard Shortcut** - Ctrl+Shift+H (Cmd+Shift+H on Mac) to toggle on/off
-- **Context Menu** - Right-click any link to add a rule for that URL
-- **Redirect Counter** - Badge shows live count of redirected/blocked requests
-- **Activity Logs** - View all redirected/blocked URLs in real-time
-- **Debug Tools** - Test patterns and view active Chrome rules
+- **Templates** - Quick-start templates for common scenarios
+- **Undo/Redo** - Revert changes with Ctrl+Z / Ctrl+Y
+- **Drag & Drop** - Reorder rules by dragging
+- **Bulk Actions** - Enable/disable/delete multiple rules at once
+- **Duplicate Detection** - Warning when adding similar patterns
+- **Domain Toggle** - Quick toggle rules for current domain
+
+### Keyboard Shortcuts
+- `Ctrl+Shift+H` (Mac: `Cmd+Shift+H`) - Toggle HotSwap on/off
+- `Ctrl+Z` - Undo last action
+- `Ctrl+Y` - Redo action
+- `↑/↓` - Navigate rules
+- `Enter` - Edit selected rule
+- `Delete` - Delete selected rule
+- `Space` - Toggle selected rule
+
+### Monitoring
+- **Live Stats** - Real-time redirect/block/header counts
+- **Activity Logs** - Full URL logging with timestamps
+- **Export CSV** - Export logs and stats to CSV
+- **Debug Tools** - View active Chrome rules, test patterns
 
 ### Technical
-- **CSP Header Stripping** - Automatically removes Content-Security-Policy headers for localhost redirects
-- **Cache-Busting** - Prevents browser caching issues with redirected resources
-- **Per-Rule Enable/Disable** - Toggle individual rules without deleting them
-- **Domain Filtering** - Limit rules to specific domains
-- **Resource Type Filtering** - Filter by scripts, XHR, stylesheets, images, etc.
-
----
+- **CSP Stripping** - Automatically removes Content-Security-Policy headers
+- **Cache Busting** - Prevents browser caching of redirected resources
+- **Per-Rule Toggle** - Enable/disable individual rules
+- **Priority Control** - Set rule priorities for ordering
+- **Resource Type Filtering** - Filter by script, XHR, CSS, image, etc.
 
 ## Installation
 
-### From Source (Developer Mode)
+1. Clone or download this repository
+2. Open Chrome and go to `chrome://extensions/`
+3. Enable "Developer mode" (toggle in top right)
+4. Click "Load unpacked" and select the extension folder
+5. Pin HotSwap to your toolbar for easy access
 
-1. Download or clone this repository
-2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable **Developer mode** (toggle in top-right corner)
-4. Click **Load unpacked**
-5. Select the extension folder
-6. The extension icon will appear in your toolbar
+## Quick Start
 
----
+1. Click the HotSwap icon in your toolbar
+2. Click **"+ Add Rule"**
+3. Enter a **Rule Name** (e.g., "My PCF Debug")
+4. Select **Type**: Redirect, Block, or Modify Headers
+5. Enter **Source URL Pattern** (e.g., `*bundle*.js`)
+6. Enter **Target URL** for redirects (e.g., `http://localhost:8181/bundle.js`)
+7. Click **Add Rule** and refresh your page!
 
-## Usage
+## Templates
 
-### Adding a Redirect Rule
+Click the **Templates** tab for pre-configured rules:
 
-1. Click the extension icon in your toolbar
-2. Click **"+ Add New Rule"**
-3. Fill in:
-   - **Rule Name**: A descriptive name (e.g., "PCF Bundle Debug")
-   - **Type**: Redirect or Block
-   - **Source URL Pattern**: The URL to intercept
-   - **Use Regex Pattern**: Check for regex, uncheck for simple wildcards
-   - **Target URL**: Where to redirect (for Redirect rules)
-   - **Limit to Domains** (optional): Only apply on specific domains
-4. Click **Add Rule**
+| Template | Description |
+|----------|-------------|
+| PCF Control Debug | Redirect PCF bundle.js to localhost |
+| React DevTools | Enable React DevTools in production |
+| Block Analytics | Block Google Analytics tracking |
+| Block Ads | Block common ad networks |
+| Local API | Redirect API calls to localhost |
+| Add CORS Headers | Add permissive CORS headers |
+| Disable Cache | Add no-cache headers |
+| Custom Header | Add custom request headers |
 
-### Pattern Examples
+## Pattern Examples
 
-#### Simple Patterns (Regex unchecked)
+### Simple Wildcards (Regex OFF)
 ```
-*bundle*.js                    → Matches any URL containing "bundle" ending in ".js"
-*://cdn.example.com/*.js       → Matches any JS file from cdn.example.com
-*dynamics.com*bundle.js        → Matches bundle.js from any dynamics.com subdomain
-```
-
-#### Regex Patterns (Regex checked)
-```
-.*bundle\.[A-Z0-9]+\.js$       → Matches bundle.HASH.js files
-.*\.dynamics\.com/.*\.js       → Matches any JS from dynamics.com subdomains
-https://.*\.powerapps\.com/.*  → Matches any powerapps.com URL
+*bundle*.js              - Match any URL containing "bundle" ending in .js
+*cdn.example.com/*.js    - Match JS files from cdn.example.com
+*/api/v1/*               - Match any API v1 endpoint
 ```
 
-#### Capture Groups (Regex + dynamic replacement)
+### Regex Patterns (Regex ON)
 ```
-Source: .*/resource/(.*\.js)$
-Target: http://localhost:8181/$1
-Result: Preserves the filename while changing the host
-```
-
-### PCF Control Development Example
-
-```
-Name: PCF Bundle Debug
-Type: Redirect
-Source URL: *bundle*.js
-Use Regex: ☐ (unchecked)
-Target URL: https://localhost:8181/bundle.js
-Domains: crm.dynamics.com
+.*/(bundle\.[A-Z0-9]+\.js)$    - Capture versioned bundle filename
+.*/api/v(\d+)/.*               - Capture API version number
+^https://.*\.example\.com/.*   - Match all subdomains
 ```
 
-### Blocking Analytics Example
+### Capture Groups
+Source: `.*/(bundle\.[A-Z0-9]+\.js)$`  
+Target: `http://localhost:8181/$1`  
+Result: Redirects `https://cdn.example.com/bundle.ABC123.js` to `http://localhost:8181/bundle.ABC123.js`
+
+## Header Modification
+
+Add, remove, or modify HTTP headers:
 
 ```
-Name: Block Analytics
-Type: Block
-Source URL: *google-analytics.com*
-Use Regex: ☐ (unchecked)
+Operation: Set | Remove | Append
+Type: Request | Response
+Header: Content-Type, Authorization, X-Custom-Header, etc.
+Value: The header value (not needed for Remove)
 ```
 
----
-
-## Keyboard Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+Shift+H` (Windows/Linux) | Toggle HotSwap on/off |
-| `Cmd+Shift+H` (Mac) | Toggle HotSwap on/off |
-
----
+### Examples
+- **Add Auth Header**: Set Request `Authorization` = `Bearer token123`
+- **Enable CORS**: Set Response `Access-Control-Allow-Origin` = `*`
+- **Remove CSP**: Remove Response `Content-Security-Policy`
+- **Disable Cache**: Set Request `Cache-Control` = `no-cache`
 
 ## Profiles
 
-Profiles let you maintain different rule sets for different projects or environments.
+Create multiple profiles for different debugging scenarios:
 
 1. Click the profile dropdown in the header
 2. Click the menu button (⋮)
-3. Choose:
-   - **New Profile** - Create an empty profile
-   - **Duplicate Profile** - Copy current profile with all rules
-   - **Delete Profile** - Remove current profile (can't delete Default)
+3. Choose: New Profile, Duplicate, Rename, or Delete
 
-Switch between profiles instantly using the dropdown.
+Profiles are completely isolated - each has its own set of rules.
 
----
+## PCF Development Example
 
-## Features In Detail
+Debugging a Power Apps PCF control:
 
-### Dark Mode
+1. **Add Rule**:
+   - Name: `MyControl Bundle`
+   - Type: `Redirect`
+   - Source: `*mycontrol*bundle.js`
+   - Target: `http://localhost:8181/bundle.js`
+   - Domain: `make.powerapps.com`
 
-Click the moon icon (🌙) in the header to toggle dark mode. Your preference is saved.
+2. Enable **Strip CSP Headers** (checked by default)
 
-### CSP Header Stripping
+3. Start your local dev server: `npm start`
 
-When redirecting to localhost, browsers often block the request due to Content-Security-Policy headers. This extension automatically strips CSP headers from configured domains.
-
-Toggle with the **"Strip CSP Headers"** checkbox.
-
-### Redirect Counter Badge
-
-The extension badge shows the count of redirected/blocked requests in the current session. This helps verify your rules are working.
-
-### Activity Logs
-
-View all activity in the **Logs** tab:
-- Original URL
-- Redirected URL (for redirects)
-- Rule name that matched
-- Request type
-- Action (REDIRECT or BLOCK)
-
-### Debug Tools
-
-In the **Settings** tab:
-- **View Active Chrome Rules** - See what rules are actually registered
-- **Test Pattern** - Test if your pattern matches a URL before adding a rule
-
----
+4. Refresh Power Apps and your local code will load!
 
 ## Troubleshooting
 
 ### Rules not working?
+1. Go to **Settings** tab
+2. Click **"View Chrome Rules"**
+3. If empty, your pattern is invalid
+4. Use **"Test Pattern"** to validate
 
-1. Check the extension badge shows a number (active rules count)
-2. Verify global toggle is ON
-3. Verify individual rule is enabled
-4. Go to Settings → Click "View Active Chrome Rules"
-   - If empty, your pattern syntax is invalid
-5. Use "Test Pattern" to verify your pattern matches the URL
+### CSP errors?
+1. Ensure **"Strip CSP"** is checked in the header
+2. Add specific domains to the "Limit to Domains" field
 
-### Invalid Regex Pattern
+### Cached responses?
+1. HotSwap auto-adds cache-busting headers
+2. Open DevTools → Network → check "Disable cache"
+3. Do a hard refresh (Ctrl+Shift+R)
 
-If using regex (checkbox checked), remember:
-- `*` means "zero or more of previous character" - use `.*` for "match anything"
-- Escape dots with `\.`
-- `^` means start, `$` means end
-- Use parentheses `()` to create capture groups
-
-**Wrong:** `*bundle*.js` (with regex checked)  
-**Right:** `.*bundle.*\.js` (with regex checked)  
-**Right:** `*bundle*.js` (with regex unchecked)
-
-### CSP Errors
-
-If you see "violates Content Security Policy":
-1. Make sure "Strip CSP Headers" is checked
-2. Add the page's domain to your rule's "Limit to Domains" field
-3. Hard refresh the page (Ctrl+Shift+R)
-
-### Caching Issues
-
-If redirects only work on hard refresh:
-1. Open DevTools (F12)
-2. Go to Network tab
-3. Check "Disable cache"
-4. Or use Ctrl+Shift+R for hard refresh
-
-The extension automatically adds cache-busting headers, but browser cache from before the rule was added may persist.
-
----
-
-## Technical Details
-
-- **Manifest Version:** 3 (latest Chrome extension format)
-- **API:** declarativeNetRequest (efficient, non-blocking)
-- **Storage:** chrome.storage.local
-- **Max Rules:** ~5000 dynamic rules supported
-
----
+### Regex not matching?
+- Don't use `*` alone - use `.*` for "match anything"
+- Escape dots: `\.` not `.`
+- Test your pattern in Settings → Test Pattern
 
 ## Changelog
 
-### v1.1.0
-- **Block URLs** - New rule type to block requests entirely
-- **Capture Groups** - Use $1, $2 in redirect URLs with regex
-- **Profiles** - Create and switch between multiple rule sets
-- **Dark Mode** - Toggle with moon icon
-- **Keyboard Shortcut** - Ctrl+Shift+H to toggle
-- **Context Menu** - Right-click to add rule for any URL
-- **Redirect Counter** - Badge shows live redirect count
-- **Search/Filter** - Find rules quickly
-- **Stats Dashboard** - See redirect/block counts in Logs tab
-- Improved UI/UX
+### v3.0.0
+- **Header Modification** - Add/remove/modify request and response headers
+- **Rule Groups & Colors** - Organize and color-code rules
+- **Templates** - Quick-start templates for common scenarios
+- **Undo/Redo** - Full undo/redo support with Ctrl+Z/Y
+- **Drag & Drop Reorder** - Reorder rules by dragging
+- **Bulk Actions** - Select and manage multiple rules at once
+- **Duplicate Detection** - Warning for similar patterns
+- **Domain Toggle** - Quick toggle rules for current domain
+- **Keyboard Navigation** - Full keyboard support for power users
+- **Export CSV** - Export logs and stats to CSV
+- **Improved UI** - Cleaner, more compact design
+- **Better Performance** - Optimized rule application
+
+### v2.0.0
+- Profiles for multiple rule sets
+- Block rules
+- Regex capture groups
+- Dark mode
+- Context menu integration
+- Keyboard shortcut
+- Live stats
 
 ### v1.0.0
 - Initial release
-- URL redirection with simple and regex patterns
-- CSP header stripping
-- Redirect logging
-- Import/Export functionality
-- Debug tools
-
----
-
-## Contributing
-
-Contributions are welcome! Feel free to submit issues or pull requests.
-
----
+- URL redirect rules
+- Wildcard patterns
+- CSP stripping
 
 ## License
 
@@ -273,11 +225,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-## Author
-
-**Krunal Patel**
-
-Created for PCF control development and Dynamics 365/Power Apps debugging.
