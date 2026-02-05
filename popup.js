@@ -396,6 +396,10 @@ function setupEventListeners() {
   document.getElementById('addAnyway').addEventListener('click', handleAddAnyway);
   document.getElementById('cancelDuplicate').addEventListener('click', closeDuplicateModal);
   
+  // Confirm modal
+  document.getElementById('confirmYes').addEventListener('click', () => closeConfirmModal(true));
+  document.getElementById('confirmNo').addEventListener('click', () => closeConfirmModal(false));
+  
   // Import/Export
   document.getElementById('exportBtn').addEventListener('click', handleExport);
   document.getElementById('exportStatsBtn').addEventListener('click', handleExportStats);
@@ -414,9 +418,12 @@ function setupEventListeners() {
   document.getElementById('testPatternBtn').addEventListener('click', handleTestPattern);
   
   // Modal close on outside click
-  ['editModal', 'profileModal', 'duplicateModal'].forEach(id => {
+  ['editModal', 'profileModal', 'duplicateModal', 'confirmModal'].forEach(id => {
     document.getElementById(id).addEventListener('click', (e) => {
-      if (e.target.id === id) document.getElementById(id).classList.remove('active');
+      if (e.target.id === id) {
+        document.getElementById(id).classList.remove('active');
+        if (id === 'confirmModal') closeConfirmModal(false);
+      }
     });
   });
   
@@ -593,7 +600,8 @@ async function handleDeleteProfile() {
     showToast('Cannot delete default profile', 'error');
     return;
   }
-  if (!confirm('Delete this profile and all its rules?')) return;
+  const confirmed = await showConfirm('Delete this profile and all its rules?', 'Delete Profile');
+  if (!confirmed) return;
   await chrome.runtime.sendMessage({ action: 'deleteProfile', profileId: currentProfile });
   currentProfile = 'default';
   await loadProfiles();
@@ -632,7 +640,10 @@ function handleSelectAll(e) {
 async function handleBulkAction(action) {
   if (selectedRules.size === 0) return;
   
-  if (action === 'delete' && !confirm(`Delete ${selectedRules.size} selected rules?`)) return;
+  if (action === 'delete') {
+    const confirmed = await showConfirm(`Delete ${selectedRules.size} selected rules?`, 'Delete Rules');
+    if (!confirmed) return;
+  }
   
   let updatedRules = [...allRules];
   if (action === 'enable') {
@@ -917,7 +928,9 @@ function closeEditModal() {
 // Delete rule
 async function handleDeleteRule(e) {
   const index = parseInt(e.target.dataset.index);
-  if (!confirm('Delete this rule?')) return;
+  const rule = allRules[index];
+  const confirmed = await showConfirm(`Delete rule "${rule?.name || 'this rule'}"?`, 'Delete Rule');
+  if (!confirmed) return;
   await saveRules(allRules.filter((_, i) => i !== index));
   await loadRules();
   showToast('Rule deleted', 'info');
@@ -977,7 +990,7 @@ async function handleImport() {
     const data = JSON.parse(text);
     if (data.rules && Array.isArray(data.rules)) {
       if (allRules.length > 0) {
-        const merge = confirm('Merge with existing rules? Cancel to replace all.');
+        const merge = await showConfirm('Merge with existing rules?\n\nClick "Merge" to add to existing rules, or "Cancel" and clear rules first to replace all.', 'Import Rules', 'Merge', false);
         await saveRules(merge ? [...allRules, ...data.rules] : data.rules);
       } else {
         await saveRules(data.rules);
@@ -998,7 +1011,8 @@ async function handleImport() {
 }
 
 async function handleClearAll() {
-  if (!confirm('Delete ALL rules in this profile?')) return;
+  const confirmed = await showConfirm('Delete ALL rules in this profile? This cannot be undone.', 'Clear All Rules');
+  if (!confirmed) return;
   await saveRules([]);
   await loadRules();
   showToast('All rules cleared', 'info');
@@ -1136,4 +1150,27 @@ function showToast(message, type = 'info') {
   toast.textContent = message;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 2500);
+}
+
+// Confirm dialog
+let confirmResolve = null;
+
+function showConfirm(message, title = 'Confirm', yesText = 'Delete', isDanger = true) {
+  return new Promise((resolve) => {
+    confirmResolve = resolve;
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    const yesBtn = document.getElementById('confirmYes');
+    yesBtn.textContent = yesText;
+    yesBtn.className = isDanger ? 'btn btn-danger' : 'btn btn-primary';
+    document.getElementById('confirmModal').classList.add('active');
+  });
+}
+
+function closeConfirmModal(result) {
+  document.getElementById('confirmModal').classList.remove('active');
+  if (confirmResolve) {
+    confirmResolve(result);
+    confirmResolve = null;
+  }
 }
