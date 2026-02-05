@@ -98,24 +98,24 @@
             </div>
             <div class="form-group flex-1">
               <label for="ruleType">Type</label>
-              <select id="ruleType" class="select-small">
+              <select id="ruleType">
                 <option value="redirect">Redirect</option>
                 <option value="block">Block</option>
-                <option value="modifyHeaders">Modify Headers</option>
+                <option value="modifyHeaders">Headers</option>
               </select>
-            </div>
-            <div class="form-group flex-1">
-              <label for="ruleGroup">Group</label>
-              <input type="text" id="ruleGroup" placeholder="e.g., PCF" list="groupsList">
-              <datalist id="groupsList"></datalist>
             </div>
           </div>
           
           <div class="form-row">
             <div class="form-group flex-1">
-              <label for="ruleColor">Color</label>
+              <label for="ruleGroup">Group</label>
+              <input type="text" id="ruleGroup" placeholder="e.g., PCF" list="groupsList">
+              <datalist id="groupsList"></datalist>
+            </div>
+            <div class="form-group flex-1">
+              <label>Color</label>
               <div class="color-picker">
-                <button type="button" class="color-btn" data-color="" title="None">⊘</button>
+                <button type="button" class="color-btn selected" data-color="" title="None">⊘</button>
                 <button type="button" class="color-btn" data-color="#EF4444" title="Red"></button>
                 <button type="button" class="color-btn" data-color="#F59E0B" title="Orange"></button>
                 <button type="button" class="color-btn" data-color="#10B981" title="Green"></button>
@@ -128,7 +128,7 @@
           
           <div class="form-group">
             <label for="sourceUrl">Source URL Pattern</label>
-            <input type="text" id="sourceUrl" placeholder="e.g., *bundle*.js" required>
+            <input type="text" id="sourceUrl" placeholder="e.g., *bundle*.js or regex pattern" required>
             <div class="pattern-type">
               <label class="checkbox-inline">
                 <input type="checkbox" id="useRegex"> Use Regex
@@ -140,7 +140,7 @@
           <div class="form-group" id="targetUrlGroup">
             <label for="targetUrl">Target URL</label>
             <input type="text" id="targetUrl" placeholder="e.g., http://localhost:8181/bundle.js">
-            <small class="capture-hint">Use $1, $2 for regex capture groups</small>
+            <small class="capture-hint">Tip: Use $1, $2 for regex capture groups</small>
           </div>
           
           <!-- Headers Section (for modifyHeaders type) -->
@@ -408,39 +408,38 @@
         <form id="edit-rule-form" class="rule-form">
           <input type="hidden" id="editIndex">
           
-          <div class="form-row">
-            <div class="form-group flex-2">
-              <label for="editRuleName">Rule Name</label>
-              <input type="text" id="editRuleName" required>
-            </div>
-            <div class="form-group flex-1">
-              <label for="editRuleType">Type</label>
-              <select id="editRuleType" class="select-small">
-                <option value="redirect">Redirect</option>
-                <option value="block">Block</option>
-                <option value="modifyHeaders">Modify Headers</option>
-              </select>
-            </div>
+          <div class="form-group">
+            <label for="editRuleName">Rule Name</label>
+            <input type="text" id="editRuleName" required>
           </div>
           
           <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="editRuleType">Type</label>
+              <select id="editRuleType">
+                <option value="redirect">Redirect</option>
+                <option value="block">Block</option>
+                <option value="modifyHeaders">Headers</option>
+              </select>
+            </div>
             <div class="form-group flex-1">
               <label for="editRuleGroup">Group</label>
               <input type="text" id="editRuleGroup" list="editGroupsList">
               <datalist id="editGroupsList"></datalist>
             </div>
-            <div class="form-group flex-1">
-              <label>Color</label>
-              <div class="color-picker" id="editColorPicker">
-                <button type="button" class="color-btn" data-color="" title="None">⊘</button>
-                <button type="button" class="color-btn" data-color="#EF4444" title="Red"></button>
-                <button type="button" class="color-btn" data-color="#F59E0B" title="Orange"></button>
-                <button type="button" class="color-btn" data-color="#10B981" title="Green"></button>
-                <button type="button" class="color-btn" data-color="#3B82F6" title="Blue"></button>
-                <button type="button" class="color-btn" data-color="#8B5CF6" title="Purple"></button>
-              </div>
-              <input type="hidden" id="editRuleColor" value="">
+          </div>
+          
+          <div class="form-group">
+            <label>Color</label>
+            <div class="color-picker" id="editColorPicker">
+              <button type="button" class="color-btn selected" data-color="" title="None">⊘</button>
+              <button type="button" class="color-btn" data-color="#EF4444" title="Red"></button>
+              <button type="button" class="color-btn" data-color="#F59E0B" title="Orange"></button>
+              <button type="button" class="color-btn" data-color="#10B981" title="Green"></button>
+              <button type="button" class="color-btn" data-color="#3B82F6" title="Blue"></button>
+              <button type="button" class="color-btn" data-color="#8B5CF6" title="Purple"></button>
             </div>
+            <input type="hidden" id="editRuleColor" value="">
           </div>
           
           <div class="form-group">
@@ -465,18 +464,19 @@
             <button type="button" id="editAddHeaderBtn" class="btn btn-sm btn-secondary">+ Add Header</button>
           </div>
           
-          <div class="form-group">
-            <label for="editDomains">Limit to Domains</label>
-            <input type="text" id="editDomains">
-          </div>
-          
-          <div class="form-group">
-            <label for="editPriority">Priority</label>
-            <input type="number" id="editPriority" min="1" max="100">
+          <div class="form-row">
+            <div class="form-group flex-2">
+              <label for="editDomains">Limit to Domains</label>
+              <input type="text" id="editDomains" placeholder="Optional">
+            </div>
+            <div class="form-group flex-1">
+              <label for="editPriority">Priority</label>
+              <input type="number" id="editPriority" min="1" max="100" value="1">
+            </div>
           </div>
           
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
             <button type="button" class="btn btn-secondary" id="cancelEdit">Cancel</button>
           </div>
         </form>
