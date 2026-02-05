@@ -242,10 +242,14 @@ function renderRules(rules, filter = '', groupFilter = '') {
   container.querySelectorAll('.rule-checkbox').forEach(c => c.addEventListener('change', handleRuleSelect));
   container.querySelectorAll('.rule-card').forEach(c => {
     c.addEventListener('click', (e) => {
-      if (!e.target.closest('button') && !e.target.closest('input') && !e.target.closest('.rule-drag-handle')) {
-        selectedRuleIndex = parseInt(c.dataset.index);
-        renderRules(allRules, document.getElementById('searchRules').value, document.getElementById('filterGroup').value);
+      // Ignore clicks on interactive elements
+      if (e.target.closest('button') || e.target.closest('input') || 
+          e.target.closest('.rule-drag-handle') || e.target.closest('.switch') || 
+          e.target.closest('.rule-toggle')) {
+        return;
       }
+      selectedRuleIndex = parseInt(c.dataset.index);
+      renderRules(allRules, document.getElementById('searchRules').value, document.getElementById('filterGroup').value);
     });
   });
   
@@ -845,7 +849,13 @@ function closeDuplicateModal() {
 
 // Toggle rule
 async function handleRuleToggle(e) {
+  e.stopPropagation(); // Prevent event bubbling
   const index = parseInt(e.target.dataset.index);
+  console.log('Toggle rule:', index, 'to', e.target.checked);
+  if (isNaN(index)) {
+    console.error('Invalid index:', e.target.dataset.index);
+    return;
+  }
   await toggleRuleEnabled(index, e.target.checked);
 }
 
